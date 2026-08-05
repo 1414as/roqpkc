@@ -15,11 +15,15 @@ body{font-family:Tahoma,sans-serif;background:#f5f5f5;color:#0a2540;line-height:
 .header .subtitle span{padding:3px 12px;background:rgba(255,255,255,.1);border-radius:4px;border:1px solid rgba(255,255,255,.2)}
 .container{max-width:1200px;margin:0 auto;padding:20px 16px 40px}
 .status-bar{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
-.filter-bar{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:20px;display:flex;flex-wrap:wrap;gap:16px;align-items:end;box-shadow:0 2px 4px rgba(0,0,0,.05)}
-.filter-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:200px}
+
+/* استایل جدید نوار فیلترها در بالای صفحه */
+.filter-bar{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:20px;display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px;box-shadow:0 2px 4px rgba(0,0,0,.05);align-items:end}
+.filter-group{display:flex;flex-direction:column;gap:6px}
 .filter-group label{font-size:0.85rem;font-weight:600;color:#64748b}
-.filter-group select{padding:10px;border:1.5px solid #cbd5e1;border-radius:6px;font-family:Tahoma;font-size:0.9rem;background:#fff;color:#0a2540;cursor:pointer}
+.filter-group select{padding:10px;border:1.5px solid #cbd5e1;border-radius:6px;font-family:Tahoma;font-size:0.9rem;background:#fff;color:#0a2540;cursor:pointer;width:100%}
 .filter-group select:focus{outline:none;border-color:#0a2540}
+.filter-actions{display:flex;align-items:end}
+
 .section-title{font-size:1.05rem;font-weight:700;margin:24px 0 14px;padding:10px 14px;background:linear-gradient(90deg,#0a2540 0,#143a66 100%);color:#fff;border-radius:8px}
 .charts-grid{display:grid;grid-template-columns:1fr;gap:16px}
 @media(min-width:900px){.charts-grid{grid-template-columns:1fr 1fr}}
@@ -45,6 +49,8 @@ body{font-family:Tahoma,sans-serif;background:#f5f5f5;color:#0a2540;line-height:
 .btn{padding:11px 20px;border:none;border-radius:8px;font-size:.92rem;font-weight:600;cursor:pointer;font-family:inherit}
 .btn-navy{background:#0a2540;color:#fff}
 .btn-navy:hover{background:#143a66}
+.btn-outline{background:#fff;color:#0a2540;border:1.5px solid #0a2540}
+.btn-outline:hover{background:#0a2540;color:#fff}
 .footer{text-align:center;padding:20px;color:#64748b;font-size:.78rem;border-top:1px solid #e2e8f0;margin-top:30px}
 .date-cell{direction:ltr;text-align:right;font-variant-numeric:tabular-nums;font-family:Tahoma,monospace;white-space:nowrap}
 </style>
@@ -71,24 +77,28 @@ body{font-family:Tahoma,sans-serif;background:#f5f5f5;color:#0a2540;line-height:
 <button class="btn btn-navy" id="refresh-btn">🔄 به‌روزرسانی</button>
 </div>
 
-<!-- نوار فیلترها -->
+<!-- نوار فیلترها در بالاترین قسمت -->
 <div class="filter-bar" id="filter-bar" style="display:none">
 <div class="filter-group">
-<label for="monthFilter">📅 فیلتر بر اساس ماه:</label>
-<select id="monthFilter" onchange="applyFilters()">
-<option value="all">همه ماه‌ها</option>
-</select>
+<label for="monthFilter">📅 فیلتر ماه:</label>
+<select id="monthFilter" onchange="applyFilters()"><option value="all">همه ماه‌ها</option></select>
 </div>
 <div class="filter-group">
-<label for="defectFilter">🔧 فیلتر بر اساس نوع عیب:</label>
-<select id="defectFilter" onchange="applyFilters()">
-<option value="all">همه عیوب</option>
-</select>
+<label for="groupFilter">📦 فیلتر گروه محصول:</label>
+<select id="groupFilter" onchange="applyFilters()"><option value="all">همه گروه‌ها</option></select>
 </div>
-<div class="filter-group" style="flex:0;min-width:auto">
-<label>&nbsp;</label>
-<button class="btn btn-navy" onclick="resetFilters()" style="padding:10px 16px">پاک کردن فیلترها</button>
-</div</div>
+<div class="filter-group">
+<label for="partFilter">🔩 فیلتر نام قطعه:</label>
+<select id="partFilter" onchange="applyFilters()"><option value="all">همه قطعات</option></select>
+</div>
+<div class="filter-group">
+<label for="defectFilter">🔧 فیلتر نوع عیب:</label>
+<select id="defectFilter" onchange="applyFilters()"><option value="all">همه عیوب</option></select>
+</div>
+<div class="filter-actions">
+<button class="btn btn-outline" onclick="resetFilters()" style="width:100%">پاک کردن فیلترها</button>
+</div>
+</div>
 
 <div id="dashboard-content">
 <div class="loading" id="loading-state">
@@ -97,7 +107,7 @@ body{font-family:Tahoma,sans-serif;background:#f5f5f5;color:#0a2540;line-height:
 </div>
 
 <div id="charts-section" style="display:none">
-<div class="section-title">📊 گزارش بیشترین عیوب مطرح‌شده (فیلتر شده)</div>
+<div class="section-title">📊 گزارش بیشترین عیوب مطرح‌شده (بر اساس فیلتر)</div>
 <div class="charts-grid" style="margin-bottom:20px">
 <div class="chart-wrap">
 <div class="chart-title">تعداد عیب بر اساس گروه محصول</div>
@@ -111,7 +121,6 @@ body{font-family:Tahoma,sans-serif;background:#f5f5f5;color:#0a2540;line-height:
 </div>
 </div>
 
-<!-- نمودار جدید روند ماهانه -->
 <div class="section-title">📈 روند تکرار عیوب در بازه زمانی</div>
 <div class="chart-wrap" style="margin-bottom:20px">
 <div class="chart-title">تعداد گزارش‌ها به تفکیک ماه</div>
@@ -119,7 +128,7 @@ body{font-family:Tahoma,sans-serif;background:#f5f5f5;color:#0a2540;line-height:
 </div>
 
 <div id="efficiency-section">
-<div class="section-title">🎯 گزارش اثربخشی اقدامات انجام‌شده (نمای کلی)</div>
+<div class="section-title">🎯 گزارش اثربخشی اقدامات انجام‌شده (نمای کلی بدون فیلتر)</div>
 <div class="charts-grid">
 <div class="chart-wrap">
 <div class="chart-title">درصد اثربخشی بر اساس گروه محصول</div>
@@ -195,13 +204,13 @@ if(!text||text.trim()==='')throw new Error('فایل data.json خالی است.'
 rawData=JSON.parse(text);
 loadingEl.style.display='none';
 chartsEl.style.display='block';
-filterBar.style.display='flex';
+filterBar.style.display='grid'; // نمایش فیلترها
 
 document.getElementById('last-update-date').textContent=rawData.fileDate||'---';
 document.getElementById('last-update-time').textContent=rawData.uploadDate?new Date(rawData.uploadDate).toLocaleString('fa-IR'):'---';
 
 populateFilters();
-applyFilters(); // این تابع همه نمودارها و جدول را رسم می‌کند
+applyFilters(); 
 
 }catch(err){
 loadingEl.innerHTML='<div style="color:#dc2626;padding:20px;border:2px solid #dc2626;border-radius:8px;background:#fef2f2">❌ '+err.message+'<br><br><strong>راهنما:</strong> فایل generator.html را اجرا کنید، اکسل جدید را وارد کرده و کد JSON را در data.json گیت‌هاب جایگذاری کنید.</div>';
@@ -212,28 +221,36 @@ function populateFilters(){
 if(!rawData || !rawData.reportsTable) return;
 
 const months=[...new Set(rawData.reportsTable.map(r=>r.month).filter(Boolean))].sort();
+const groups=[...new Set(rawData.reportsTable.map(r=>r.productGroup).filter(Boolean))].sort();
+const parts=[...new Set(rawData.reportsTable.map(r=>r.partName).filter(Boolean))].sort();
 const defects=[...new Set(rawData.reportsTable.map(r=>r.defect).filter(Boolean))].sort();
 
-const monthSelect=document.getElementById('monthFilter');
-monthSelect.innerHTML='<option value="all">همه ماه‌ها</option>'+months.map(m=>`<option value="${m}">${m}</option>`).join('');
-
-const defectSelect=document.getElementById('defectFilter');
-defectSelect.innerHTML='<option value="all">همه عیوب</option>'+defects.map(d=>`<option value="${d}">${d}</option>`).join('');
+document.getElementById('monthFilter').innerHTML='<option value="all">همه ماه‌ها</option>'+months.map(m=>`<option value="${m}">${m}</option>`).join('');
+document.getElementById('groupFilter').innerHTML='<option value="all">همه گروه‌ها</option>'+groups.map(g=>`<option value="${g}">${g}</option>`).join('');
+document.getElementById('partFilter').innerHTML='<option value="all">همه قطعات</option>'+parts.map(p=>`<option value="${p}">${p}</option>`).join('');
+document.getElementById('defectFilter').innerHTML='<option value="all">همه عیوب</option>'+defects.map(d=>`<option value="${d}">${d}</option>`).join('');
 }
 
 function resetFilters(){
 document.getElementById('monthFilter').value='all';
+document.getElementById('groupFilter').value='all';
+document.getElementById('partFilter').value='all';
 document.getElementById('defectFilter').value='all';
 applyFilters();
 }
 
 function applyFilters(){
-const selMonth=document.getElementById('monthFilter').value;
-const selDefect=document.getElementById('defectFilter').value;
+const fMonth=document.getElementById('monthFilter').value;
+const fGroup=document.getElementById('groupFilter').value;
+const fPart=document.getElementById('partFilter').value;
+const fDefect=document.getElementById('defectFilter').value;
 
-// 1. فیلتر کردن جدول مسترلیست
+// 1. فیلتر کردن جدول
 const filteredReports=rawData.reportsTable.filter(r=>{
-return (selMonth==='all' || r.month===selMonth) && (selDefect==='all' || r.defect===selDefect);
+return (fMonth==='all' || r.month===fMonth) && 
+       (fGroup==='all' || r.productGroup===fGroup) && 
+       (fPart==='all' || r.partName===fPart) && 
+       (fDefect==='all' || r.defect===fDefect);
 });
 
 const tbody=document.getElementById('reports-tbody');
@@ -269,14 +286,13 @@ const newDefTable=Object.entries(defCounts).map(([name,count])=>({name,count}));
 drawChart('chart-product-count',newProdTable,'productCount',true);
 drawChart('chart-defect-count',newDefTable,'defectCount',true);
 
-// رسم نمودار روند ماهانه
 const trendLabels=Object.keys(monthTrend).sort();
 const trendValues=trendLabels.map(m=>monthTrend[m]);
 drawTrendChart('chart-trend',trendLabels,trendValues);
 
 // 4. مدیریت بخش اثربخشی (فقط در حالت بدون فیلتر نمایش داده می‌شود)
 const effSection=document.getElementById('efficiency-section');
-if(selMonth!=='all' || selDefect!=='all'){
+if(fMonth!=='all' || fGroup!=='all' || fPart!=='all' || fDefect!=='all'){
 effSection.style.display='none';
 }else{
 effSection.style.display='block';
@@ -289,7 +305,6 @@ function drawChart(id,data,key,isCount){
 const ctx=document.getElementById(id).getContext('2d');
 if(charts[key])charts[key].destroy();
 if(!data||data.length===0){
-// رسم نمودار خالی
 charts[key]=new Chart(ctx,{type:'bar',data:{labels:['داده‌ای نیست'],datasets:[{data:[0]}]},options:{plugins:{legend:{display:false}}}});
 return;
 }
