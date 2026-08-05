@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>داشبورد آنلاین گزارش وضعیت کیفی قطعات ریخته‌گری</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Tahoma,sans-serif;background:#f8fafc;color:#0a2540;line-height:1.6}
+
+/* Header */
+.header{background:linear-gradient(135deg,#0a2540 0%,#143a66 100%);color:#fff;padding:28px 20px;text-align:center;border-bottom:4px solid #1e4976;box-shadow:0 4px 12px rgba(10,37,64,0.15)}
+.header h1{font-size:clamp(1.1rem,3.5vw,1.6rem);font-weight:800;margin-bottom:12px;letter-spacing:0.3px}
+.header .subtitle{font-size:clamp(0.78rem,2.5vw,0.92rem);opacity:0.95;display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.header .subtitle span{padding:4px 14px;background:rgba(255,255,255,0.12);border-radius:6px;border:1px solid rgba(255,255,255,0.25)}
+
+/* Container */
+.container{max-width:1300px;margin:0 auto;padding:24px 16px 40px}
+
+/* Status Bar */
+.status-bar{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;box-shadow:0 2px 8px rgba(10,37,64,0.06)}
+.status-info{display:flex;flex-direction:column;gap:4px}
+.status-label{font-size:0.78rem;color:#64748b;font-weight:500}
+.status-value{font-size:1rem;font-weight:700;color:#0a2540;direction:ltr;text-align:right}
+.btn{padding:10px 22px;border:none;border-radius:8px;font-size:0.92rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s}
+.btn-navy{background:#0a2540;color:#fff}
+.btn-navy:hover{background:#143a66;transform:translateY(-1px)}
+
+/* Filter Bar */
+.filter-bar{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:24px;box-shadow:0 2px 8px rgba(10,37,64,0.06);display:flex;flex-wrap:wrap;gap:16px;align-items:end}
+.filter-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:200px}
+.filter-group label{font-size:0.82rem;font-weight:600;color:#0a2540}
+.filter-group select{padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-family:Tahoma;font-size:0.9rem;background:#fff;color:#0a2540;cursor:pointer;width:100%;transition:border-color 0.2s}
+.filter-group select:focus{outline:none;border-color:#0a2540}
+
+/* Section Title */
+.section-title{font-size:1.08rem;font-weight:700;margin:28px 0 16px;padding:12px 18px;background:linear-gradient(90deg,#0a2540 0%,#143a66 100%);color:#fff;border-radius:10px;display:flex;align-items:center;gap:10px}
+
+/* Charts Grid */
+.charts-grid{display:grid;grid-template-columns:1fr;gap:18px}
+@media(min-width:900px){.charts-grid{grid-template-columns:1fr 1fr}}
+.chart-wrap{background:#fff;border-radius:12px;padding:22px;box-shadow:0 2px 10px rgba(10,37,64,0.06);border:1px solid #e2e8f0}
+.chart-title{font-size:0.98rem;font-weight:700;color:#0a2540;margin-bottom:12px;text-align:center;padding-bottom:10px;border-bottom:2px solid #f1f5f9}
+.chart-legend{font-size:0.75rem;color:#64748b;text-align:center;margin-bottom:12px;display:flex;justify-content:center;align-items:center;gap:8px}
+.legend-gradient{width:100px;height:10px;border-radius:5px;display:inline-block}
+.gradient-green-red{background:linear-gradient(to left,#16A34A,#FBBF24,#DC2626)}
+.gradient-red-green{background:linear-gradient(to left,#DC2626,#FBBF24,#16A34A)}
+.chart-container{position:relative;width:100%;height:380px}
+.chart-container.tall{height:420px}
+
+/* Table */
+.table-section{margin-top:28px;background:#fff;border-radius:12px;padding:22px;box-shadow:0 2px 10px rgba(10,37,64,0.06);border:1px solid #e2e8f0;overflow-x:auto}
+.table-title{text-align:center;color:#0a2540;margin-bottom:16px;font-size:1.1rem;font-weight:700}
+.data-table{width:100%;border-collapse:collapse;font-size:0.85rem}
+.data-table th{background:#0a2540;color:#fff;padding:12px 10px;text-align:right;font-weight:600;white-space:nowrap}
+.data-table td{padding:10px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+.data-table tr:hover{background:#f8fafc}
+.data-table tr:nth-child(even){background:#fafbfc}
+.row-number{background:#0a2540;color:#fff;width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem}
+.date-cell{direction:ltr;text-align:right;font-variant-numeric:tabular-nums;font-family:Tahoma,monospace;white-space:nowrap}
+
+/* Loading & Error */
+.loading{text-align:center;padding:50px;color:#64748b}
+.spinner{border:4px solid #e2e8f0;border-top:4px solid #0a2540;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;margin:0 auto 16px}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.error-box{background:#fef2f2;border:2px solid #dc2626;border-radius:10px;padding:20px;color:#991b1b;text-align:center;margin:20px 0}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#0a2540;color:#fff;padding:12px 24px;border-radius:8px;opacity:0;transition:all 0.3s;z-index:1000;max-width:90%;font-weight:600}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Footer */
+.footer{text-align:center;padding:24px;color:#64748b;font-size:0.8rem;border-top:1px solid #e2e8f0;margin-top:30px}
+</style>
+</head>
+<body>
+
+<header class="header">
+<h1>داشبورد آنلاین گزارش وضعیت کیفی قطعات ریخته‌گری</h1>
+<div class="subtitle">
+<span>شرکت پویانوین قطعه جی</span>
+<span>واحد تضمین کیفیت</span>
+</div>
+</header>
+
+<div class="container">
+
+<!-- Status Bar -->
+<div class="status-bar">
+<div class="status-info">
+<div class="status-label">📅 تاریخ مندرج در فایل</div>
+<div class="status-value" id="last-date">---</div>
+</div>
+<div class="status-info">
+<div class="status-label">🕒 آخرین به‌روزرسانی</div>
+<div class="status-value" id="last-time">---</div>
+</div>
+<button class="btn btn-navy" id="refresh-btn">🔄 به‌روزرسانی</button>
+</div>
+
+<!-- Month Filter for Chart 4 -->
+<div class="filter-bar" id="filter-bar" style="display:none">
+<div class="filter-group">
+<label for="fMonth">📅 فیلتر ماه (برای نمودار روند عیوب):</label>
+<select id="fMonth" multiple size="4"></select>
+<div style="font-size:0.75rem;color:#64748b;margin-top:4px">برای انتخاب چند ماه، کلید Ctrl را نگه دارید</div>
+</div>
+<div class="filter-group" style="flex:0;min-width:auto">
+<label>&nbsp;</label>
+<button class="btn btn-navy" onclick="selectAllMonths()" style="width:100%">انتخاب همه</button>
+<button class="btn" onclick="clearMonthSelection()" style="width:100%;background:#fff;color:#0a2540;border:1.5px solid #0a2540;margin-top:6px">پاک کردن</button>
+</div>
+</div>
+
+<div id="content">
+<div class="loading" id="loading">
+<div class="spinner"></div>
+<div id="loading-text">در حال دریافت داده‌ها...</div>
+</div>
+<div id="error-box" style="display:none"></div>
+
+<div id="main" style="display:none">
+
+<!-- Chart 1 & 2: Count Charts -->
+<div class="section-title">📊 گزارش بیشترین عیوب مطرح‌شده</div>
+<div class="charts-grid" style="margin-bottom:20px">
+<div class="chart-wrap">
+<div class="chart-title">تعداد عیوب بر اساس گروه محصول</div>
+<div class="chart-legend"><span>تکرار کم (سبز)</span><span class="legend-gradient gradient-green-red"></span><span>تکرار زیاد (قرمز)</span></div>
+<div class="chart-container"><canvas id="c1"></canvas></div>
+</div>
+<div class="chart-wrap">
+<div class="chart-title">تعداد عیوب بر اساس نوع عیب ریخته‌گری</div>
+<div class="chart-legend"><span>تکرار کم (سبز)</span><span class="legend-gradient gradient-green-red"></span><span>تکرار زیاد (قرمز)</span></div>
+<div class="chart-container"><canvas id="c2"></canvas></div>
+</div>
+</div>
+
+<!-- Chart 3 & 5: Effectiveness Charts -->
+<div class="section-title">🎯 گزارش درصد اثربخشی اقدامات</div>
+<div class="charts-grid" style="margin-bottom:20px">
+<div class="chart-wrap">
+<div class="chart-title">درصد اثربخشی بر اساس گروه محصول</div>
+<div class="chart-legend"><span>اثربخشی کم (قرمز)</span><span class="legend-gradient gradient-red-green"></span><span>اثربخشی زیاد (سبز)</span></div>
+<div class="chart-container"><canvas id="c3"></canvas></div>
+</div>
+<div class="chart-wrap">
+<div class="chart-title">درصد اثربخشی بر اساس نوع عیب ریخته‌گری</div>
+<div class="chart-legend"><span>اثربخشی کم (قرمز)</span><span class="legend-gradient gradient-red-green"></span><span>اثربخشی زیاد (سبز)</span></div>
+<div class="chart-container"><canvas id="c5"></canvas></div>
+</div>
+</div>
+
+<!-- Chart 4: Trend Chart with Month Filter -->
+<div class="section-title"> روند تکرار عیوب ریخته‌گری به تفکیک ماه</div>
+<div class="chart-wrap" style="margin-bottom:20px">
+<div class="chart-title">تعداد تکرار هر عیب در ماه‌های انتخاب‌شده</div>
+<div class="chart-container tall"><canvas id="c4"></canvas></div>
+</div>
+
+<!-- Reports Table -->
+<div class="table-section">
+<div class="table-title">📋 مسترلیست گزارش‌های کیفی</div>
+<div style="max-height:600px;overflow-y:auto">
+<table class="data-table">
+<thead>
+<tr>
+<th style="width:50px">ردیف</th>
+<th style="width:110px">تاریخ</th>
+<th style="width:160px">عیب ریخته‌گری</th>
+<th style="width:140px">گروه محصول</th>
+<th style="width:260px">نام قطعه</th>
+<th>شرح گزارش</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+<div class="footer">© داشبورد کیفی ریخته‌گری — واحد تضمین کیفیت — شرکت پویانوین قطعه جی</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const REPO='1414as/rqpkc';
+const FILE='data.json';
+let DATA=null;
+const CH={};
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+
+async function fetchWithTimeout(url,timeout=10000){
+const controller=new AbortController();
+const id=setTimeout(()=>controller.abort(),timeout);
+try{
+const response=await fetch(url,{signal:controller.signal});
+clearTimeout(id);
+return response;
+}catch(e){clearTimeout(id);throw e}
+}
+
+async function load(){
+const ld=document.getElementById('loading');
+const lt=document.getElementById('loading-text');
+const mn=document.getElementById('main');
+const fb=document.getElementById('filter-bar');
+const eb=document.getElementById('error-box');
+ld.style.display='block';mn.style.display='none';fb.style.display='none';eb.style.display='none';
+
+try{
+lt.textContent='اتصال به سرور...';
+let url='https://cdn.jsdelivr.net/gh/'+REPO+'@main/'+FILE+'?t='+Date.now();
+let r=await fetchWithTimeout(url,10000);
+if(!r.ok){
+lt.textContent='تلاش از سرور جایگزین...';
+url='https://raw.githubusercontent.com/'+REPO+'/main/'+FILE+'?t='+Date.now();
+r=await fetchWithTimeout(url,10000);
+}
+if(!r.ok)throw new Error('داده‌ای یافت نشد. لطفاً generator.html را اجرا و data.json را به‌روز کنید.');
+const txt=await r.text();
+if(!txt||!txt.trim())throw new Error('فایل data.json خالی است.');
+DATA=JSON.parse(txt);
+
+lt.textContent='در حال نمایش...';
+ld.style.display='none';
+mn.style.display='block';
+fb.style.display='flex';
+
+document.getElementById('last-date').textContent=DATA.fileDate||'---';
+document.getElementById('last-time').textContent=DATA.uploadDate?new Date(DATA.uploadDate).toLocaleString('fa-IR'):'---';
+
+fillMonthFilter();
+renderAll();
+}catch(e){
+ld.style.display='none';
+eb.style.display='block';
+eb.innerHTML='<div class="error-box">❌ '+e.message+'<br><br>فایل generator.html را اجرا کنید و data.json را در GitHub به‌روز کنید.</div>';
+console.error(e);
+}
+}
+
+function fillMonthFilter(){
+if(!DATA||!DATA.months)return;
+const sel=document.getElementById('fMonth');
+sel.innerHTML='';
+DATA.months.forEach(m=>{
+const o=document.createElement('option');
+o.value=m;
+o.textContent=m;
+o.selected=true;
+sel.appendChild(o);
+});
+}
+
+function selectAllMonths(){
+const sel=document.getElementById('fMonth');
+for(let o of sel.options)o.selected=true;
+renderChart4();
+}
+
+function clearMonthSelection(){
+const sel=document.getElementById('fMonth');
+for(let o of sel.options)o.selected=false;
+renderChart4();
+}
+
+document.getElementById('fMonth').addEventListener('change',renderChart4);
+document.getElementById('refresh-btn').addEventListener('click',()=>{load();toast('🔄 به‌روزرسانی شد')});
+
+function renderAll(){
+renderTable();
+renderChart1();
+renderChart2();
+renderChart3();
+renderChart4();
+renderChart5();
+}
+
+function renderTable(){
+const tbody=document.getElementById('tbody');
+tbody.innerHTML='';
+const sorted=[...DATA.reportsTable].sort((a,b)=>parseInt(b.row)-parseInt(a.row));
+sorted.forEach(r=>{
+tbody.innerHTML+='<tr>'+
+'<td><span class="row-number">'+r.row+'</span></td>'+
+'<td class="date-cell">'+r.date+'</td>'+
+'<td>'+r.defect+'</td>'+
+'<td>'+r.productGroup+'</td>'+
+'<td>'+r.partName+'</td>'+
+'<td style="white-space:pre-line">'+r.description+'</td>'+
+'</tr>';
+});
+}
+
+function getColorByCount(value,min,max){
+if(max===min)return'hsl(120, 70%, 45%)';
+const ratio=(value-min)/(max-min);
+const hue=120*(1-ratio);
+return'hsl('+hue+', 75%, 45%)';
+}
+
+function getColorByEffectiveness(pct){
+const hue=120*(pct/100);
+return'hsl('+hue+', 75%, 45%)';
+}
+
+function renderChart1(){
+const ctx=document.getElementById('c1').getContext('2d');
+if(CH.c1)CH.c1.destroy();
+
+const counts={};
+DATA.reportsTable.forEach(r=>{if(r.productGroup)counts[r.productGroup]=(counts[r.productGroup]||0)+1});
+const data=Object.entries(counts).map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count);
+
+if(data.length===0){
+CH.c1=new Chart(ctx,{type:'bar',data:{labels:['داده‌ای نیست'],datasets:[{data:[0]}]},options:{plugins:{legend:{display:false}}}});
+return;
+}
+
+const values=data.map(d=>d.count);
+const max=Math.max(...values),min=Math.min(...values);
+const colors=values.map(v=>getColorByCount(v,min,max));
+
+CH.c1=new Chart(ctx,{
+type:'bar',
+data:{labels:data.map(d=>d.name),datasets:[{data:values,backgroundColor:colors,borderColor:colors.map(c=>c),borderWidth:2,borderRadius:6}]},
+options:{
+indexAxis:'y',
+responsive:true,
+maintainAspectRatio:false,
+plugins:{legend:{display:false},tooltip:{rtl:true,textDirection:'rtl',backgroundColor:'#0a2540',titleFont:{family:'Tahoma',size:13,weight:'bold'},bodyFont:{family:'Tahoma',size:12},callbacks:{label:c=>'تعداد: '+c.raw}}},
+scales:{
+x:{beginAtZero:true,ticks:{font:{family:'Tahoma',size:11},stepSize:1},grid:{color:'#f1f5f9'}},
+y:{ticks:{font:{family:'Tahoma',size:11,weight:'600'},color:'#0a2540'},grid:{display:false}}
+}
+}
+});
+}
+
+function renderChart2(){
+const ctx=document.getElementById('c2').getContext('2d');
+if(CH.c2)CH.c2.destroy();
+
+const counts={};
+DATA.reportsTable.forEach(r=>{if(r.defect)counts[r.defect]=(counts[r.defect]||0)+1});
+const data=Object.entries(counts).map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count);
+
+if(data.length===0){
+CH.c2=new Chart(ctx,{type:'bar',data:{labels:['داده‌ای نیست'],datasets:[{data:[0]}]},options:{plugins:{legend:{display:false}}}});
+return;
+}
+
+const values=data.map(d=>d.count);
+const max=Math.max(...values),min=Math.min(...values);
+const colors=values.map(v=>getColorByCount(v,min,max));
+
+CH.c2=new Chart(ctx,{
+type:'bar',
+data:{labels:data.map(d=>d.name),datasets:[{data:values,backgroundColor:colors,borderColor:colors.map(c=>c),borderWidth:2,borderRadius:6}]},
+options:{
+indexAxis:'y',
+responsive:true,
+maintainAspectRatio:false,
+plugins:{legend:{display:false},tooltip:{rtl:true,textDirection:'rtl',backgroundColor:'#0a2540',titleFont:{family:'Tahoma',size:13,weight:'bold'},bodyFont:{family:'Tahoma',size:12},callbacks:{label:c=>'تعداد: '+c.raw}}},
+scales:{
+x:{beginAtZero:true,ticks:{font:{family:'Tahoma',size:11},stepSize:1},grid:{color:'#f1f5f9'}},
+y:{ticks:{font:{family:'Tahoma',size:11,weight:'600'},color:'#0a2540'},grid:{display:false}}
+}
+}
+});
+}
+
+function renderChart3(){
+const ctx=document.getElementById('c3').getContext('2d');
+if(CH.c3)CH.c3.destroy();
+
+const data=(DATA.productEffectiveness||[]).slice().sort((a,b)=>b.pct-a.pct);
+
+if(data.length===0){
+CH.c3=new Chart(ctx,{type:'bar',data:{labels:['داده‌ای نیست'],datasets:[{data:[0]}]},options:{plugins:{legend:{display:false}}}});
+return;
+}
+
+const values=data.map(d=>d.pct);
+const colors=values.map(v=>getColorByEffectiveness(v));
+
+CH.c3=new Chart(ctx,{
+type:'bar',
+data:{labels:data.map(d=>d.name),datasets:[{data:values,backgroundColor:colors,borderColor:colors.map(c=>c),borderWidth:2,borderRadius:6}]},
+options:{
+indexAxis:'y',
+responsive:true,
+maintainAspectRatio:false,
+plugins:{legend:{display:false},tooltip:{rtl:true,textDirection:'rtl',backgroundColor:'#0a2540',titleFont:{family:'Tahoma',size:13,weight:'bold'},bodyFont:{family:'Tahoma',size:12},callbacks:{label:c=>'اثربخشی: '+c.raw.toFixed(1)+'% | تکرار: '+data[c.dataIndex].count}}},
+scales:{
+x:{beginAtZero:true,max:100,ticks:{font:{family:'Tahoma',size:11},callback:v=>v+'%'},grid:{color:'#f1f5f9'}},
+y:{ticks:{font:{family:'Tahoma',size:11,weight:'600'},color:'#0a2540'},grid:{display:false}}
+}
+}
+});
+}
+
+function renderChart4(){
+const ctx=document.getElementById('c4').getContext('2d');
+if(CH.c4)CH.c4.destroy();
+
+const sel=document.getElementById('fMonth');
+const selectedMonths=[...sel.selectedOptions].map(o=>o.value).sort();
+
+if(selectedMonths.length===0){
+CH.c4=new Chart(ctx,{type:'bar',data:{labels:['ماه انتخاب نشده'],datasets:[{data:[0]}]},options:{plugins:{legend:{display:false}}}});
+return;
+}
+
+const defects=DATA.defects||[];
+const defectByMonth=DATA.defectByMonth||{};
+
+const datasets=defects.map((defect,idx)=>{
+const data=selectedMonths.map(m=>defectByMonth[defect]?.[m]||0);
+const palette=['#0a2540','#1e4976','#2d6aa0','#3d8bd4','#5ba8e0','#7fc4ea','#a8dcf0','#143a66','#1a4d80','#2563a0','#3578b8','#4a8fd0'];
+return{
+label:defect,
+data:data,
+backgroundColor:palette[idx%palette.length]+'cc',
+borderColor:palette[idx%palette.length],
+borderWidth:2,
+borderRadius:4
+};
+});
+
+CH.c4=new Chart(ctx,{
+type:'bar',
+data:{labels:selectedMonths,datasets:datasets},
+options:{
+responsive:true,
+maintainAspectRatio:false,
+plugins:{
+legend:{position:'bottom',rtl:true,labels:{font:{family:'Tahoma',size:11,weight:'600'},color:'#0a2540',padding:12,usePointStyle:true}},
+tooltip:{rtl:true,textDirection:'rtl',backgroundColor:'#0a2540',titleFont:{family:'Tahoma',size:13,weight:'bold'},bodyFont:{family:'Tahoma',size:12}}
+},
+scales:{
+x:{stacked:false,ticks:{font:{family:'Tahoma',size:11,weight:'bold'},color:'#0a2540'},grid:{display:false}},
+y:{beginAtZero:true,ticks:{font:{family:'Tahoma',size:11},stepSize:1},grid:{color:'#f1f5f9'},title:{display:true,text:'تعداد تکرار',font:{family:'Tahoma',size:12,weight:'bold'},color:'#0a2540'}}
+}
+}
+});
+}
+
+function renderChart5(){
+const ctx=document.getElementById('c5').getContext('2d');
+if(CH.c5)CH.c5.destroy();
+
+const data=(DATA.defectEffectiveness||[]).slice().sort((a,b)=>b.pct-a.pct);
+
+if(data.length===0){
+CH.c5=new Chart(ctx,{type:'bar',data:{labels:['داده‌ای نیست'],datasets:[{data:[0]}]},options:{plugins:{legend:{display:false}}}});
+return;
+}
+
+const values=data.map(d=>d.pct);
+const colors=values.map(v=>getColorByEffectiveness(v));
+
+CH.c5=new Chart(ctx,{
+type:'bar',
+data:{labels:data.map(d=>d.name),datasets:[{data:values,backgroundColor:colors,borderColor:colors.map(c=>c),borderWidth:2,borderRadius:6}]},
+options:{
+indexAxis:'y',
+responsive:true,
+maintainAspectRatio:false,
+plugins:{legend:{display:false},tooltip:{rtl:true,textDirection:'rtl',backgroundColor:'#0a2540',titleFont:{family:'Tahoma',size:13,weight:'bold'},bodyFont:{family:'Tahoma',size:12},callbacks:{label:c=>'اثربخشی: '+c.raw.toFixed(1)+'% | تکرار: '+data[c.dataIndex].count}}},
+scales:{
+x:{beginAtZero:true,max:100,ticks:{font:{family:'Tahoma',size:11},callback:v=>v+'%'},grid:{color:'#f1f5f9'}},
+y:{ticks:{font:{family:'Tahoma',size:11,weight:'600'},color:'#0a2540'},grid:{display:false}}
+}
+}
+});
+}
+
+window.addEventListener('load',load);
+</script>
+</body>
+</html>
