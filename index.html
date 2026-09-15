@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>داشبورد جلسات پاسخ سریع | پویانوین قطعه جی</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --navy-900:#0A192F;--navy-800:#112240;--navy-700:#1B263B;--navy-600:#233554;
+  --blue-500:#457B9D;--blue-300:#A8DADC;
+  --green:#2A9D8F;--red:#D90429;--orange:#F4A261;--yellow:#FFD60A;--light-blue:#00B4D8;
+  --bg:#F8F9FA;--card:#FFFFFF;--text:#1B263B;--muted:#6C757D;--border:#E1E8ED;
+  --led-red:#FF073A;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Vazirmatn',sans-serif}
+body{background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;font-size:14px}
+header{background:linear-gradient(135deg,var(--navy-900) 0%,var(--navy-700) 100%);color:#fff;padding:18px 24px;box-shadow:0 4px 20px rgba(10,25,47,0.15);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+header .title-block h1{font-size:20px;font-weight:700}
+header .title-block h2{font-size:12px;font-weight:400;opacity:.85;margin-top:4px}
+header .meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.update-badge{background:rgba(42,157,143,.2);color:#fff;padding:7px 14px;border-radius:8px;border:1px solid rgba(42,157,143,.4);font-size:12px;display:flex;align-items:center;gap:6px}
+.datetime-panel{background:rgba(0,0,0,0.55);border:2px solid var(--led-red);border-radius:10px;padding:8px 14px;display:flex;flex-direction:column;gap:4px;box-shadow:0 0 15px rgba(255,7,58,0.3),inset 0 0 10px rgba(255,7,58,0.1);position:relative;overflow:hidden}
+.datetime-panel::before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none}
+.datetime-row{display:flex;align-items:center;gap:8px;font-family:'Orbitron',monospace;letter-spacing:1px;position:relative;z-index:1}
+.datetime-label{color:var(--led-red);opacity:0.5;font-size:9px;font-weight:600;text-shadow:0 0 3px var(--led-red);min-width:32px}
+.datetime-value{color:var(--led-red);text-shadow:0 0 4px var(--led-red),0 0 8px var(--led-red),0 0 12px rgba(255,7,58,0.6);direction:ltr;text-align:left;font-variant-numeric:tabular-nums}
+.datetime-value.date{font-size:14px;letter-spacing:2px}
+.datetime-value.time{font-size:22px;letter-spacing:2px}
+.datetime-separator{color:var(--led-red);animation:blink 1s infinite;text-shadow:0 0 4px var(--led-red)}
+@keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0.2}}
+.view-toggle{display:flex;background:rgba(0,0,0,0.4);border-radius:10px;padding:4px;border:1px solid rgba(255,255,255,0.15);gap:2px}
+.view-toggle-btn{background:transparent;border:none;color:rgba(255,255,255,0.6);width:36px;height:36px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.25s ease;position:relative}
+.view-toggle-btn:hover{background:rgba(255,255,255,0.1);color:#fff}
+.view-toggle-btn.active{background:var(--green);color:#fff;box-shadow:0 0 10px rgba(42,157,143,0.5)}
+.view-toggle-btn svg{width:20px;height:20px}
+.view-toggle-btn::after{content:attr(data-tooltip);position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);background:var(--navy-900);color:#fff;font-size:10px;padding:3px 8px;border-radius:5px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.2s;font-family:'Vazirmatn',sans-serif}
+.view-toggle-btn:hover::after{opacity:1}
+main{padding:20px;max-width:1600px;margin:0 auto}
+.filters-section{background:var(--card);padding:18px;border-radius:14px;box-shadow:0 2px 12px rgba(10,25,47,.06);margin-bottom:20px;border:1px solid var(--border)}
+.filters-section h3{color:var(--navy-800);font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.filters-section h3::before{content:"";width:4px;height:16px;background:var(--blue-500);border-radius:2px}
+.filters-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:12px}
+.filter-item label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:500}
+.filter-item select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text);font-size:12px;font-family:inherit;cursor:pointer}
+.filter-item select:focus{outline:none;border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(69,123,157,.15)}
+.filter-actions{display:flex;gap:10px;margin-top:14px;justify-content:flex-end;flex-wrap:wrap}
+.btn{padding:7px 16px;border-radius:8px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;transition:all .2s}
+.btn-primary{background:var(--navy-800);color:#fff}.btn-primary:hover{background:var(--navy-900)}
+.btn-secondary{background:#fff;color:var(--navy-800);border:1px solid var(--border)}.btn-secondary:hover{background:var(--bg)}
+.kpi-section{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.kpi-card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 2px 12px rgba(10,25,47,.06);border:1px solid var(--border);border-right:4px solid var(--blue-500);transition:transform .2s,box-shadow .2s;position:relative}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(10,25,47,.1)}
+.kpi-card .kpi-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.kpi-card .kpi-label{font-size:12px;color:var(--muted);font-weight:500}
+.kpi-card .kpi-icon{width:32px;height:32px;border-radius:8px;background:rgba(69,123,157,.1);color:var(--blue-500);display:flex;align-items:center;justify-content:center;font-size:16px}
+.kpi-card .kpi-value{font-size:24px;font-weight:700;color:var(--navy-800);margin:4px 0}
+.kpi-card .kpi-desc{font-size:10.5px;color:var(--muted);line-height:1.6;border-top:1px dashed var(--border);padding-top:8px;margin-top:8px}
+.kpi-card.success{border-right-color:var(--green)}.kpi-card.success .kpi-icon{background:rgba(42,157,143,.1);color:var(--green)}
+.kpi-card.danger{border-right-color:var(--red)}.kpi-card.danger .kpi-icon{background:rgba(217,4,41,.1);color:var(--red)}
+.kpi-card.warning{border-right-color:var(--orange)}.kpi-card.warning .kpi-icon{background:rgba(244,162,97,.1);color:var(--orange)}
+.kpi-card.clickable{cursor:pointer}
+.kpi-card.clickable .view-hint{position:absolute;top:10px;left:10px;background:var(--red);color:#fff;font-size:9px;padding:2px 7px;border-radius:10px;font-weight:600}
+.kpi-card.clickable .view-hint.blue{background:var(--navy-800)}
+.charts-section{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:20px}
+.chart-card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 2px 12px rgba(10,25,47,.06);border:1px solid var(--border)}
+.chart-card h3{color:var(--navy-800);font-size:14px;font-weight:600;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.chart-card h3::before{content:"";width:4px;height:14px;background:var(--navy-800);border-radius:2px}
+.chart-card .chart-desc{font-size:11px;color:var(--muted);margin-bottom:12px}
+.chart-card .chart-wrap{position:relative;height:300px}
+.chart-card.full-width{grid-column:1/-1}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);text-align:center;pointer-events:none}
+.donut-center .dc-num{font-size:24px;font-weight:700;color:var(--navy-800)}
+.donut-center .dc-lbl{font-size:10px;color:var(--muted)}
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,25,47,.6);z-index:1000;justify-content:center;align-items:center;padding:15px;backdrop-filter:blur(4px)}
+.modal-overlay.active{display:flex}
+.modal{background:#fff;border-radius:14px;max-width:960px;width:100%;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(10,25,47,.3)}
+.modal-header{background:var(--navy-800);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+.modal-header h3{font-size:15px;font-weight:600}
+.modal-close{background:transparent;border:none;color:#fff;font-size:22px;cursor:pointer;width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:rgba(255,255,255,.15)}
+.modal-body{padding:18px 20px;overflow-y:auto;flex:1}
+.issue-item{border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#fff;transition:all .2s;border-right:4px solid var(--red)}
+.issue-item:hover{box-shadow:0 4px 12px rgba(10,25,47,.08);transform:translateX(-2px)}
+.issue-item .issue-date{display:inline-block;background:var(--navy-800);color:#fff;padding:2px 9px;border-radius:12px;font-size:10px;font-weight:500;margin-bottom:6px}
+.issue-item .issue-title{font-size:13px;font-weight:600;color:var(--navy-800);margin-bottom:5px;line-height:1.7}
+.issue-item .issue-meta{font-size:11px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.issue-item .issue-meta span{display:flex;align-items:center;gap:3px}
+.table-section{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 2px 12px rgba(10,25,47,.06);border:1px solid var(--border);margin-bottom:20px}
+.table-section h3{color:var(--navy-800);font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.table-section h3::before{content:"";width:4px;height:14px;background:var(--navy-800);border-radius:2px}
+.table-wrap{overflow-x:auto;max-height:600px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.data-table{width:100%;border-collapse:collapse;font-size:11.5px;min-width:1000px}
+.data-table thead{position:sticky;top:0;z-index:2}
+.data-table th{background:var(--navy-800);color:#fff;padding:9px 7px;text-align:right;font-weight:600;white-space:nowrap;border:1px solid #000;font-size:11.5px}
+.data-table td{padding:7px;border:1px solid #000;vertical-align:top;line-height:1.5}
+.data-table tbody tr:nth-child(even){background:#f0f4f8}
+.data-table tbody tr:hover{opacity:0.85}
+.data-table tbody tr.status-green{background:#d4edda !important}
+.data-table tbody tr.status-yellow{background:#fff3cd !important}
+.data-table tbody tr.status-red{background:#f8d7da !important}
+.data-table tbody tr.status-blue{background:#d1ecf1 !important}
+footer{background:var(--navy-900);color:#fff;padding:18px 24px;text-align:center;font-size:12px;margin-top:24px}
+footer .copyright{opacity:.9}footer .copyright strong{color:var(--blue-300)}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 20px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:2000;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center}
+.toast.show{opacity:1}.toast.error{background:var(--red)}
+.loading-screen{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
+.spinner{width:50px;height:50px;border:4px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-screen p{font-size:14px;color:var(--navy-800)}
+.error-screen{text-align:center;padding:60px 20px}
+.error-screen .icon{font-size:60px;margin-bottom:16px}
+.error-screen h3{font-size:20px;color:var(--navy-800);margin-bottom:10px}
+.error-screen p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.8}
+body.view-pc .filters-grid{grid-template-columns:repeat(7,1fr)}
+body.view-pc .charts-section{grid-template-columns:repeat(2,1fr)}
+body.view-pc .kpi-section{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+body.view-mobile{font-size:13px}
+body.view-mobile header{padding:12px;flex-direction:column;align-items:stretch}
+body.view-mobile header .title-block{text-align:center}
+body.view-mobile header .title-block h1{font-size:16px}
+body.view-mobile header .title-block h2{font-size:11px}
+body.view-mobile header .meta{justify-content:center}
+body.view-mobile main{padding:10px}
+body.view-mobile .filters-grid{grid-template-columns:1fr !important;gap:8px}
+body.view-mobile .kpi-section{grid-template-columns:1fr !important;gap:10px}
+body.view-mobile .charts-section{grid-template-columns:1fr !important;gap:12px}
+body.view-mobile .chart-card .chart-wrap{height:240px}
+body.view-mobile .data-table{font-size:10px;min-width:800px}
+body.view-mobile .datetime-value.date{font-size:12px}
+body.view-mobile .datetime-value.time{font-size:18px}
+@media(max-width:1200px){body.view-pc .filters-grid{grid-template-columns:repeat(4,1fr)}body.view-pc .charts-section{grid-template-columns:1fr}}
+@media(max-width:768px){body.view-pc{font-size:13px}body.view-pc header{padding:14px;flex-direction:column;align-items:flex-start}body.view-pc .filters-grid{grid-template-columns:repeat(2,1fr)}body.view-pc .kpi-section{grid-template-columns:repeat(2,1fr)}body.view-pc .chart-card .chart-wrap{height:260px}}
+@media(max-width:480px){body.view-pc .filters-grid{grid-template-columns:1fr}body.view-pc .kpi-section{grid-template-columns:1fr}body.view-pc header .meta{flex-direction:column;align-items:stretch}}
+</style>
+</head>
+<body class="view-pc">
+
+<!-- صفحه لودینگ -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <p>در حال بارگذاری داده‌ها...</p>
+</div>
+
+<header>
+  <div class="title-block">
+    <h1>📊 داشبورد جلسات پاسخ سریع</h1>
+    <h2>شرکت پویانوین قطعه جی | مانیتورینگ وضعیت مشکلات و اقدامات اصلاحی</h2>
+  </div>
+  <div class="meta">
+    <div class="update-badge" id="updateBadge">
+      <span>🕐</span>
+      <span>آخرین به‌روزرسانی: <strong id="lastUpdate">-</strong></span>
+    </div>
+    <div class="datetime-panel">
+      <div class="datetime-row"><span class="datetime-label">DATE</span><span class="datetime-value date" id="currentDate">----/--/--</span></div>
+      <div class="datetime-row"><span class="datetime-label">TIME</span><span class="datetime-value time" id="currentTime">--<span class="datetime-separator">:</span>--<span class="datetime-separator">:</span>--</span></div>
+    </div>
+    <div class="view-toggle">
+      <button class="view-toggle-btn active" id="viewPC" data-tooltip="حالت دسکتاپ" onclick="setViewMode('pc')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+      </button>
+      <button class="view-toggle-btn" id="viewMobile" data-tooltip="حالت موبایل" onclick="setViewMode('mobile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="mainContent" style="display:none">
+  <section class="filters-section">
+    <h3>🔍 فیلترهای داشبورد</h3>
+    <div class="filters-grid">
+      <div class="filter-item"><label>سال شمسی</label><select id="filterYear" onchange="applyFilters()"><option value="">همه سال‌ها</option></select></div>
+      <div class="filter-item"><label>ماه شمسی</label><select id="filterMonth" onchange="applyFilters()"><option value="">همه ماه‌ها</option></select></div>
+      <div class="filter-item"><label>نام قطعه</label><select id="filterPart" onchange="applyFilters()"><option value="">همه قطعات</option></select></div>
+      <div class="filter-item"><label>شاخص (حوزه/دستگاه)</label><select id="filterIndicator" onchange="applyFilters()"><option value="">همه شاخص‌ها</option></select></div>
+      <div class="filter-item"><label>اطلاع‌دهنده</label><select id="filterReporter" onchange="applyFilters()"><option value="">همه اطلاع‌دهندگان</option></select></div>
+      <div class="filter-item"><label>مسئول رسیدگی</label><select id="filterResponsible" onchange="applyFilters()"><option value="">همه مسئول‌ها</option></select></div>
+      <div class="filter-item"><label>وضعیت</label><select id="filterStatus" onchange="applyFilters()"><option value="">همه وضعیت‌ها</option></select></div>
+    </div>
+    <div class="filter-actions"><button class="btn btn-secondary" onclick="resetFilters()">🔄 پاک‌سازی فیلترها</button></div>
+  </section>
+
+  <section class="kpi-section">
+    <div class="kpi-card success"><div class="kpi-header"><div class="kpi-label">شاخص رفع عیب</div><div class="kpi-icon">✓</div></div><div class="kpi-value" id="kpiResolution">-</div><div class="kpi-desc">درصد مشکلاتی که به وضعیت سبز یا آبی رسیده‌اند.</div></div>
+    <div class="kpi-card"><div class="kpi-header"><div class="kpi-label">کل مشکلات ثبت‌شده</div><div class="kpi-icon">📋</div></div><div class="kpi-value" id="kpiTotal">-</div><div class="kpi-desc">مجموع تعداد درخواست‌ها و عیوب مطرح‌شده.</div></div>
+    <div class="kpi-card danger clickable" onclick="openUnresolvedModal()"><span class="view-hint">👁 مشاهده</span><div class="kpi-header"><div class="kpi-label">مشکلات رفع نشده</div><div class="kpi-icon">⚠</div></div><div class="kpi-value" id="kpiOpen">-</div><div class="kpi-desc">تعداد مواردی که هنوز حل نشده‌اند (زرد یا قرمز).</div></div>
+    <div class="kpi-card warning"><div class="kpi-header"><div class="kpi-label">میانگین زمان حل مشکل</div><div class="kpi-icon">⏱</div></div><div class="kpi-value" id="kpiMTTR">-</div><div class="kpi-desc">میانگین روزهای سپری‌شده از زمان ثبت تا امروز.</div></div>
+    <div class="kpi-card clickable" onclick="openCriticalModal()"><span class="view-hint blue">👁 مشاهده</span><div class="kpi-header"><div class="kpi-label">حوزه‌های بحرانی</div><div class="kpi-icon">🏭</div></div><div class="kpi-value" id="kpiCriticalMachines">-</div><div class="kpi-desc">تعداد حوزه‌هایی که بیش از ۳ بار دچار مشکل شده‌اند.</div></div>
+    <div class="kpi-card warning"><div class="kpi-header"><div class="kpi-label">نرخ تکرار خرابی</div><div class="kpi-icon">🔁</div></div><div class="kpi-value" id="kpiRecurring">-</div><div class="kpi-desc">درصد مشکلات مربوط به حوزه‌های تکرارشونده.</div></div>
+  </section>
+
+  <section class="charts-section">
+    <div class="chart-card"><h3>وضعیت کلی مشکلات</h3><div class="chart-desc">توزیع درصدی و عددی مشکلات</div><div class="chart-wrap"><canvas id="chartStatus"></canvas><div class="donut-center"><div class="dc-num" id="donutTotal">0</div><div class="dc-lbl">کل موارد</div></div></div></div>
+    <div class="chart-card"><h3>ماتریس گلوگاه‌ها</h3><div class="chart-desc">توزیع بر اساس مسئول</div><div class="chart-wrap"><canvas id="chartResponsible"></canvas></div></div>
+    <div class="chart-card full-width"><h3>وضعیت حوزه‌های بحرانی</h3><div class="chart-desc">قانون ۲۰/۸۰</div><div class="chart-wrap"><canvas id="chartIndicator"></canvas></div></div>
+    <div class="chart-card"><h3>بیشترین قطعات مورد بحث</h3><div class="chart-desc">۱۰ قطعه پرتکرار</div><div class="chart-wrap"><canvas id="chartPart"></canvas></div></div>
+    <div class="chart-card"><h3>بیشترین مشکل بر اساس اطلاع‌دهنده</h3><div class="chart-desc">توزیع بر اساس واحد گزارش‌دهنده</div><div class="chart-wrap"><canvas id="chartReporter"></canvas></div></div>
+  </section>
+
+  <section class="table-section">
+    <h3>📋 جدول کامل داده‌ها (جدیدترین → قدیمی‌ترین)</h3>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>ردیف</th><th>تاریخ</th><th>اطلاع‌دهنده</th><th>مسئول</th><th>شرح موضوع</th><th>شاخص</th><th>نام قطعه</th><th>اقدام اصلاحی</th><th>تاریخ پیش‌بینی پایان</th><th>تاریخ انجام</th></tr></thead>
+        <tbody id="dataTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- صفحه خطا -->
+<div class="error-screen" id="errorScreen" style="display:none">
+  <div class="icon">⚠️</div>
+  <h3>خطا در بارگذاری داده‌ها</h3>
+  <p id="errorMessage">فایل data.json یافت نشد یا قابل خواندن نیست.<br>لطفاً مطمئن شوید فایل در مسیر صحیح قرار دارد.</p>
+  <button class="btn btn-primary" onclick="location.reload()">🔄 تلاش مجدد</button>
+</div>
+
+<div class="modal-overlay" id="unresolvedModal"><div class="modal"><div class="modal-header"><h3>⚠ مشکلات رفع نشده (جدیدترین → قدیمی‌ترین)</h3><button class="modal-close" onclick="closeModal('unresolvedModal')">×</button></div><div class="modal-body" id="unresolvedList"></div></div></div>
+<div class="modal-overlay" id="criticalModal"><div class="modal"><div class="modal-header"><h3>🏭 حوزه‌های بحرانی (بیش از ۳ مشکل)</h3><button class="modal-close" onclick="closeModal('criticalModal')">×</button></div><div class="modal-body" id="criticalList"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<footer><div class="copyright">© طراحی و توسعه توسط <strong>Abbas Sadeghi</strong> | تمامی حقوق برای شرکت پویانوین قطعه جی محفوظ است | ۱۴۰۵</div></footer>
+
+<script>
+let data=[],charts={},currentFiltered=[];
+const palette=['#0A192F','#1B263B','#233554','#457B9D','#A8DADC','#2A9D8F','#E9C46A','#F4A261','#E76F51','#264653','#6D597A','#B56576','#E56B6F','#EAAC8B','#31B0D2','#6096B4','#939185','#4A4E69','#C9ADA7','#F2E9E4','#8ECAE6','#219EBC','#023047','#FFB703','#FB8500'];
+
+// ============ تاریخ شمسی ============
+function gregorianToJalali(gy,gm,gd){var g=[0,31,59,90,120,151,181,212,243,273,304,334],jy=(gy<=1600)?0:979;gy-=(gy<=1600)?621:1600;var gy2=(gm>2)?(gy+1):gy,days=(365*gy)+(parseInt((gy2+3)/4))-(parseInt((gy2+99)/100))+(parseInt((gy2+399)/400))-80+gd+g[gm-1];jy+=33*parseInt(days/12053);days%=12053;jy+=4*parseInt(days/1461);days%=1461;if(days>365){jy+=parseInt((days-1)/365);days=(days-1)%365}var jm=(days<186)?1+parseInt(days/31):7+parseInt((days-186)/30),jd=1+((days<186)?(days%31):((days-186)%30));return[jy,jm,jd]}
+function updateDateTime(){const n=new Date(),j=gregorianToJalali(n.getFullYear(),n.getMonth()+1,n.getDate()),d=j[0]+'/'+String(j[1]).padStart(2,'0')+'/'+String(j[2]).padStart(2,'0'),h=String(n.getHours()).padStart(2,'0'),m=String(n.getMinutes()).padStart(2,'0'),s=String(n.getSeconds()).padStart(2,'0');document.getElementById('currentDate').textContent=d;document.getElementById('currentTime').innerHTML=h+'<span class="datetime-separator">:</span>'+m+'<span class="datetime-separator">:</span>'+s}
+setInterval(updateDateTime,1000);updateDateTime();
+function getTodayJalali(){const n=new Date(),j=gregorianToJalali(n.getFullYear(),n.getMonth()+1,n.getDate());return j[0]+'/'+String(j[1]).padStart(2,'0')+'/'+String(j[2]).padStart(2,'0')}
+function showToast(msg,err=false){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(err?' error':'');setTimeout(()=>t.className='toast',4000)}
+
+// ============ توابع کمکی ============
+function cleanStr(s){if(s===undefined||s===null)return"";return String(s).trim().replace(/[\u200c\u200f\u200e]+/g,'').replace(/^\s+|\s+$/g,'')}
+function parseJalali(s){if(!s)return null;const p=cleanStr(s).split('/').map(x=>parseInt(x));if(p.length<3||isNaN(p[0]))return null;return{year:p[0],month:p[1],day:p[2]}}
+function jalaliToDayNum(y,m,d){return(365*y)+(Math.floor(y/4)-Math.floor((y+99)/100)+Math.floor((y+399)/400)-81)+d+(m<=7?(m-1)*31:((m-1)*30)+6)}
+function daysBetween(a,b){const d1=parseJalali(a),d2=parseJalali(b);if(!d1||!d2)return 0;return Math.abs(jalaliToDayNum(d2.year,d2.month,d2.day)-jalaliToDayNum(d1.year,d1.month,d1.day))}
+function compareJalali(a,b){const d1=parseJalali(a),d2=parseJalali(b);if(!d1||!d2)return 0;return jalaliToDayNum(d1.year,d1.month,d1.day)-jalaliToDayNum(d2.year,d2.month,d2.day)}
+function calculateStatus(dl,dn){if(dn&&parseJalali(dn)){return compareJalali(dn,dl)<=0?'سبز':'آبی'}else{return compareJalali(getTodayJalali(),dl)>0?'قرمز':'زرد'}}
+
+function processData(raw){
+  return raw.map(r=>{
+    const dl=cleanStr(r[8]),dn=cleanStr(r[9]);
+    return{id:r[0],date:cleanStr(r[1]),reporter:cleanStr(r[2]),responsible:cleanStr(r[3]),description:cleanStr(r[4]),indicator:cleanStr(r[5]),partName:cleanStr(r[6]),correctiveAction:cleanStr(r[7]),deadline:dl,doneDate:dn,status:calculateStatus(dl,dn)}
+  }).filter(d=>d.date&&parseJalali(d.date));
+}
+function sortDateDesc(a){return a.slice().sort((x,y)=>{const pa=parseJalali(x.date),pb=parseJalali(y.date);return jalaliToDayNum(pb.year,pb.month,pb.day)-jalaliToDayNum(pa.year,pa.month,pa.day)})}
+
+// ============ View Mode ============
+function setViewMode(mode){document.body.classList.remove('view-pc','view-mobile');document.body.classList.add('view-'+mode);document.getElementById('viewPC').classList.toggle('active',mode==='pc');document.getElementById('viewMobile').classList.toggle('active',mode==='mobile');try{localStorage.setItem('pnq_view',mode)}catch(e){}setTimeout(()=>{Object.values(charts).forEach(c=>{if(c&&c.resize)c.resize()})},100)}
+function loadViewMode(){try{const s=localStorage.getItem('pnq_view');if(s==='mobile'||s==='pc')setViewMode(s)}catch(e){}}
+
+// ============ نمودارها ============
+function initCharts(){
+  Chart.defaults.font.family='Vazirmatn';Chart.defaults.color='#1B263B';
+  charts.status=new Chart(document.getElementById('chartStatus'),{type:'doughnut',data:{labels:['سبز','زرد','قرمز','آبی'],datasets:[{data:[0,0,0,0],backgroundColor:['#2A9D8F','#FFD60A','#D90429','#00B4D8'],borderWidth:3,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{padding:12,font:{size:12},generateLabels:c=>{const ds=c.data.datasets[0],t=ds.data.reduce((a,b)=>a+b,0);return c.data.labels.map((l,i)=>({text:l+': '+ds.data[i]+' ('+((t>0?(ds.data[i]/t)*100:0).toFixed(1))+'%)',fillStyle:ds.backgroundColor[i],strokeStyle:ds.borderColor,lineWidth:ds.borderWidth,index:i}))}},tooltip:{callbacks:{label:c=>{const t=c.dataset.data.reduce((a,b)=>a+b,0);return c.label+': '+c.raw+' ('+((t>0?(c.raw/t)*100:0).toFixed(1))+'%)'}}}}}}});
+  charts.responsible=new Chart(document.getElementById('chartResponsible'),{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:'#1B263B',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#E1E8ED'}},y:{grid:{display:false}}}}});
+  charts.indicator=new Chart(document.getElementById('chartIndicator'),{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:'#457B9D',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#E1E8ED'}}}}});
+  charts.part=new Chart(document.getElementById('chartPart'),{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:'#0A192F',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#E1E8ED'}},y:{grid:{display:false}}}}});
+  charts.reporter=new Chart(document.getElementById('chartReporter'),{type:'doughnut',data:{labels:[],datasets:[{data:[],backgroundColor:palette,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'45%',plugins:{legend:{position:'bottom',labels:{padding:8,font:{size:10},boxWidth:10}}}}});
+}
+
+// ============ فیلترها ============
+function populateFilters(){
+  const years=[...new Set(data.map(d=>parseJalali(d.date)?.year).filter(Boolean))].sort();
+  const months=[...new Set(data.map(d=>{const p=parseJalali(d.date);return p?p.year+'/'+String(p.month).padStart(2,'0'):null}).filter(Boolean))].sort();
+  const parts=[...new Set(data.map(d=>d.partName).filter(Boolean))].sort();
+  const indicators=[...new Set(data.map(d=>d.indicator).filter(Boolean))].sort();
+  const reporters=[...new Set(data.map(d=>d.reporter).filter(Boolean))].sort();
+  const responsibles=[...new Set(data.map(d=>d.responsible).filter(Boolean))].sort();
+  const statuses=[...new Set(data.map(d=>d.status).filter(Boolean))].sort((a,b)=>['سبز','زرد','قرمز','آبی'].indexOf(a)-['سبز','زرد','قرمز','آبی'].indexOf(b));
+  fillSel('filterYear',years);fillSel('filterMonth',months);fillSel('filterPart',parts);fillSel('filterIndicator',indicators);fillSel('filterReporter',reporters);fillSel('filterResponsible',responsibles);fillSel('filterStatus',statuses);
+}
+function fillSel(id,items){const s=document.getElementById(id),v=s.value,f=s.options[0].outerHTML;s.innerHTML=f+items.map(i=>'<option value="'+i+'">'+i+'</option>').join('');if(items.includes(v))s.value=v}
+function getFilteredData(){
+  const y=document.getElementById('filterYear').value,m=document.getElementById('filterMonth').value,p=document.getElementById('filterPart').value,i=document.getElementById('filterIndicator').value,r=document.getElementById('filterReporter').value,rs=document.getElementById('filterResponsible').value,st=document.getElementById('filterStatus').value;
+  return data.filter(d=>{const pd=parseJalali(d.date);if(!pd)return false;const ym=pd.year+'/'+String(pd.month).padStart(2,'0');if(y&&pd.year!=y)return false;if(m&&ym!==m)return false;if(p&&d.partName!==p)return false;if(i&&d.indicator!==i)return false;if(r&&d.reporter!==r)return false;if(rs&&d.responsible!==rs)return false;if(st&&d.status!==st)return false;return true});
+}
+function applyFilters(){updateDashboard(getFilteredData())}
+function resetFilters(){['filterYear','filterMonth','filterPart','filterIndicator','filterReporter','filterResponsible','filterStatus'].forEach(id=>document.getElementById(id).value='');updateDashboard(data)}
+
+function updateDashboard(f){
+  currentFiltered=f;const t=f.length,g=f.filter(d=>d.status==='سبز').length,y=f.filter(d=>d.status==='زرد').length,r=f.filter(d=>d.status==='قرمز').length,b=f.filter(d=>d.status==='آبی').length;
+  const res=t>0?(((g+b)/t)*100).toFixed(1):0;
+  const rd=f.filter(d=>d.status==='سبز'||d.status==='آبی').map(d=>daysBetween(d.date,getTodayJalali()));
+  const mttr=rd.length>0?(rd.reduce((a,c)=>a+c,0)/rd.length).toFixed(1):'-';
+  const ic={};f.forEach(d=>{if(d.indicator)ic[d.indicator]=(ic[d.indicator]||0)+1});
+  const cm=Object.values(ic).filter(c=>c>3).length;
+  const pc={};f.forEach(d=>{if(d.partName)pc[d.partName]=(pc[d.partName]||0)+1});
+  const rec=Object.values(ic).filter(c=>c>1).reduce((a,c)=>a+c,0);
+  const rr=t>0?((rec/t)*100).toFixed(1):0;
+  document.getElementById('kpiResolution').textContent=res+'%';
+  document.getElementById('kpiTotal').textContent=t.toLocaleString('fa-IR');
+  document.getElementById('kpiOpen').textContent=(y+r).toLocaleString('fa-IR');
+  document.getElementById('kpiMTTR').textContent=mttr!=='-'?mttr+' روز':'-';
+  document.getElementById('kpiCriticalMachines').textContent=cm.toLocaleString('fa-IR');
+  document.getElementById('kpiRecurring').textContent=rr+'%';
+  document.getElementById('donutTotal').textContent=t;
+  charts.status.data.datasets[0].data=[g,y,r,b];charts.status.update();
+  const rD={};f.forEach(d=>{if(d.responsible)rD[d.responsible]=(rD[d.responsible]||0)+1});const rS=Object.entries(rD).sort((a,b)=>b[1]-a[1]);
+  charts.responsible.data.labels=rS.map(x=>x[0]);charts.responsible.data.datasets[0].data=rS.map(x=>x[1]);charts.responsible.update();
+  const iE=Object.entries(ic).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  charts.indicator.data.labels=iE.map(x=>x[0]);charts.indicator.data.datasets[0].data=iE.map(x=>x[1]);charts.indicator.update();
+  const pS=Object.entries(pc).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  charts.part.data.labels=pS.map(x=>x[0]);charts.part.data.datasets[0].data=pS.map(x=>x[1]);charts.part.update();
+  const rpD={};f.forEach(d=>{if(d.reporter)rpD[d.reporter]=(rpD[d.reporter]||0)+1});const rpS=Object.entries(rpD).sort((a,b)=>b[1]-a[1]);
+  charts.reporter.data.labels=rpS.map(x=>x[0]);charts.reporter.data.datasets[0].data=rpS.map(x=>x[1]);charts.reporter.update();
+  window._ic=ic;renderTable(f);
+}
+
+function renderTable(f){
+  const s=sortDateDesc(f),tb=document.getElementById('dataTableBody');
+  tb.innerHTML=s.map(d=>{let c='';if(d.status==='سبز')c='status-green';else if(d.status==='زرد')c='status-yellow';else if(d.status==='قرمز')c='status-red';else if(d.status==='آبی')c='status-blue';
+  return'<tr class="'+c+'"><td>'+d.id+'</td><td>'+d.date+'</td><td>'+(d.reporter||'-')+'</td><td>'+(d.responsible||'-')+'</td><td>'+d.description+'</td><td>'+(d.indicator||'-')+'</td><td>'+(d.partName||'-')+'</td><td>'+(d.correctiveAction||'-')+'</td><td>'+(d.deadline||'-')+'</td><td>'+(d.doneDate||'-')+'</td></tr>'}).join('');
+}
+
+function openUnresolvedModal(){const u=sortDateDesc(currentFiltered.filter(d=>d.status==='زرد'||d.status==='قرمز')),l=document.getElementById('unresolvedList');if(!u.length){l.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">✅ مشکلی یافت نشد!</div>'}else{l.innerHTML=u.map(d=>'<div class="issue-item" style="border-right-color:'+(d.status==='قرمز'?'var(--red)':'var(--yellow)')+'"><span class="issue-date">📅 '+d.date+'</span><div class="issue-title">'+d.description+'</div><div class="issue-meta"><span>👤 <b>'+(d.reporter||'-')+'</b></span><span>🔧 <b>'+(d.responsible||'-')+'</b></span><span>📅 سررسید: <b>'+(d.deadline||'-')+'</b></span></div></div>').join('')}document.getElementById('unresolvedModal').classList.add('active')}
+function openCriticalModal(){const ic=window._ic||{};let e=Object.entries(ic).filter(x=>x[1]>3).sort((a,b)=>b[1]-a[1]);const l=document.getElementById('criticalList');if(!e.length){l.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">✅ حوزه بحرانی یافت نشد!</div>'}else{l.innerHTML=e.map(x=>'<div class="issue-item" style="border-right-color:var(--orange)"><span class="issue-date">🏭 '+x[0]+'</span><div class="issue-title" style="font-size:12px;color:var(--muted)">تعداد: <b style="color:var(--red)">'+x[1]+' مشکل</b></div></div>').join('')}document.getElementById('criticalModal').classList.add('active')}
+function closeModal(id){document.getElementById(id).classList.remove('active')}
+document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('active')})});
+
+// ============ بارگذاری داده‌ها از data.json ============
+async function loadData(){
+  try{
+    // اضافه کردن timestamp برای جلوگیری از cache
+    const resp=await fetch('data.json?t='+Date.now(),{cache:'no-store'});
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    const json=await resp.json();
+    
+    // پشتیبانی از دو فرمت: آرایه ساده یا آبجکت با meta
+    let rawData,metaData={};
+    if(Array.isArray(json)){
+      rawData=json;
+    }else if(json.data){
+      rawData=json.data;
+      metaData=json.meta||{};
+    }else{
+      throw new Error('فرمت JSON نامعتبر است');
+    }
+    
+    if(!rawData||!rawData.length){
+      throw new Error('فایل data.json خالی است');
+    }
+    
+    data=processData(rawData);
+    
+    if(!data.length){
+      throw new Error('پس از پردازش، هیچ داده معتبری باقی نماند');
+    }
+    
+    // نمایش تاریخ به‌روزرسانی
+    const updatedAt=metaData.updatedAt||'-';
+    const totalRecords=metaData.totalRecords||data.length;
+    document.getElementById('lastUpdate').textContent=updatedAt+' ('+totalRecords.toLocaleString('fa-IR')+' رکورد)';
+    
+    // راه‌اندازی UI
+    initCharts();
+    populateFilters();
+    updateDashboard(data);
+    
+    document.getElementById('loadingScreen').style.display='none';
+    document.getElementById('mainContent').style.display='block';
+    
+  }catch(err){
+    console.error('Error loading data:',err);
+    document.getElementById('loadingScreen').style.display='none';
+    document.getElementById('errorScreen').style.display='block';
+    document.getElementById('errorMessage').innerHTML='خطا: '+err.message+'<br><br>لطفاً مطمئن شوید:<br>۱. فایل <code style="background:#fff;padding:2px 6px;border-radius:4px">data.json</code> در کنار <code style="background:#fff;padding:2px 6px;border-radius:4px">index.html</code> قرار دارد<br>۲. فایل JSON معتبر است<br>۳. از طریق GitHub Pages به سایت دسترسی دارید';
+  }
+}
+
+// ============ راه‌اندازی ============
+window.addEventListener('DOMContentLoaded',()=>{
+  loadViewMode();
+  loadData();
+});
+</script>
+</body>
+</html>
