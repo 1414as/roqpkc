@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>داشبورد جلسات پاسخ سریع | پویانوین قطعه جی</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy-900:#0A192F;--navy-800:#112240;--navy-700:#1B263B;--navy-600:#233554;
+  --blue-500:#457B9D;--blue-300:#A8DADC;
+  --green:#2A9D8F;--red:#D90429;--orange:#F4A261;--yellow:#FFD60A;--light-blue:#00B4D8;
+  --bg:#F8F9FA;--card:#FFFFFF;--text:#1B263B;--muted:#6C757D;--border:#E1E8ED;
+  --led-red:#FF073A;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Vazirmatn',sans-serif}
+body{background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;font-size:14px}
+
+header{
+  background:linear-gradient(135deg,var(--navy-900) 0%,var(--navy-700) 100%);
+  color:#fff;padding:18px 24px;box-shadow:0 4px 20px rgba(10,25,47,0.15);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px
+}
+header .title-block h1{font-size:20px;font-weight:700}
+header .title-block h2{font-size:12px;font-weight:400;opacity:.85;margin-top:4px}
+header .meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* سون سگمنت ساعت و تاریخ */
+.datetime-panel{
+  background:rgba(0,0,0,0.55);border:2px solid var(--led-red);border-radius:10px;
+  padding:8px 14px;display:flex;flex-direction:column;gap:4px;
+  box-shadow:0 0 15px rgba(255,7,58,0.3),inset 0 0 10px rgba(255,7,58,0.1);
+  position:relative;overflow:hidden
+}
+.datetime-panel::before{
+  content:"";position:absolute;top:0;left:0;right:0;bottom:0;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);
+  pointer-events:none
+}
+.datetime-row{
+  display:flex;align-items:center;gap:8px;font-family:'Orbitron',monospace;
+  letter-spacing:1px;position:relative;z-index:1
+}
+.datetime-row.date-row{font-size:13px}
+.datetime-row.time-row{font-size:20px;font-weight:700}
+.datetime-label{
+  color:var(--led-red);opacity:0.5;font-size:9px;font-weight:600;
+  text-shadow:0 0 3px var(--led-red);min-width:32px
+}
+.datetime-value{
+  color:var(--led-red);
+  text-shadow:0 0 4px var(--led-red),0 0 8px var(--led-red),0 0 12px rgba(255,7,58,0.6);
+  direction:ltr;text-align:left;font-variant-numeric:tabular-nums
+}
+.datetime-value.date{font-size:14px;letter-spacing:2px}
+.datetime-value.time{font-size:22px;letter-spacing:2px}
+.datetime-separator{color:var(--led-red);animation:blink 1s infinite;text-shadow:0 0 4px var(--led-red)}
+@keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0.2}}
+
+/* دکمه‌های تغییر حالت نمایش */
+.view-toggle{
+  display:flex;background:rgba(0,0,0,0.4);border-radius:10px;padding:4px;
+  border:1px solid rgba(255,255,255,0.15);gap:2px
+}
+.view-toggle-btn{
+  background:transparent;border:none;color:rgba(255,255,255,0.6);
+  width:36px;height:36px;border-radius:7px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.25s ease;position:relative
+}
+.view-toggle-btn:hover{background:rgba(255,255,255,0.1);color:#fff}
+.view-toggle-btn.active{background:var(--green);color:#fff;box-shadow:0 0 10px rgba(42,157,143,0.5)}
+.view-toggle-btn svg{width:20px;height:20px}
+.view-toggle-btn::after{
+  content:attr(data-tooltip);position:absolute;bottom:-28px;left:50%;
+  transform:translateX(-50%);background:var(--navy-900);color:#fff;
+  font-size:10px;padding:3px 8px;border-radius:5px;white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity 0.2s;font-family:'Vazirmatn',sans-serif
+}
+.view-toggle-btn:hover::after{opacity:1}
+
+.upload-btn{
+  background:var(--green);color:#fff;border:none;padding:8px 14px;border-radius:8px;
+  cursor:pointer;font-family:inherit;font-size:12px;font-weight:500;
+  display:flex;align-items:center;gap:6px;transition:all .2s
+}
+.upload-btn:hover{background:#238578;transform:translateY(-1px)}
+
+.user-badge{
+  background:rgba(42,157,143,.25);color:#fff;padding:6px 12px;border-radius:8px;
+  font-size:11px;display:flex;align-items:center;gap:6px;border:1px solid rgba(42,157,143,.4)
+}
+.user-badge .logout-btn{
+  background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;
+  padding:2px 8px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:10px
+}
+.user-badge .logout-btn:hover{background:rgba(255,255,255,.15)}
+
+main{padding:20px;max-width:1600px;margin:0 auto}
+
+.filters-section{
+  background:var(--card);padding:18px;border-radius:14px;
+  box-shadow:0 2px 12px rgba(10,25,47,.06);margin-bottom:20px;border:1px solid var(--border)
+}
+.filters-section h3{
+  color:var(--navy-800);font-size:14px;font-weight:600;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px
+}
+.filters-section h3::before{content:"";width:4px;height:16px;background:var(--blue-500);border-radius:2px}
+.filters-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:12px}
+.filter-item label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:500}
+.filter-item select{
+  width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;
+  background:#fff;color:var(--text);font-size:12px;font-family:inherit;cursor:pointer
+}
+.filter-item select:focus{outline:none;border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(69,123,157,.15)}
+.filter-actions{display:flex;gap:10px;margin-top:14px;justify-content:flex-end;flex-wrap:wrap}
+.btn{
+  padding:7px 16px;border-radius:8px;border:none;cursor:pointer;
+  font-family:inherit;font-size:12px;font-weight:500;transition:all .2s
+}
+.btn-primary{background:var(--navy-800);color:#fff}
+.btn-primary:hover{background:var(--navy-900)}
+.btn-secondary{background:#fff;color:var(--navy-800);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--bg)}
+
+.kpi-section{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.kpi-card{
+  background:var(--card);padding:16px;border-radius:12px;
+  box-shadow:0 2px 12px rgba(10,25,47,.06);
+  border:1px solid var(--border);border-right:4px solid var(--blue-500);
+  transition:transform .2s,box-shadow .2s;position:relative
+}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(10,25,47,.1)}
+.kpi-card .kpi-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.kpi-card .kpi-label{font-size:12px;color:var(--muted);font-weight:500}
+.kpi-card .kpi-icon{
+  width:32px;height:32px;border-radius:8px;background:rgba(69,123,157,.1);color:var(--blue-500);
+  display:flex;align-items:center;justify-content:center;font-size:16px
+}
+.kpi-card .kpi-value{font-size:24px;font-weight:700;color:var(--navy-800);margin:4px 0}
+.kpi-card .kpi-desc{font-size:10.5px;color:var(--muted);line-height:1.6;border-top:1px dashed var(--border);padding-top:8px;margin-top:8px}
+.kpi-card.success{border-right-color:var(--green)}
+.kpi-card.success .kpi-icon{background:rgba(42,157,143,.1);color:var(--green)}
+.kpi-card.danger{border-right-color:var(--red)}
+.kpi-card.danger .kpi-icon{background:rgba(217,4,41,.1);color:var(--red)}
+.kpi-card.warning{border-right-color:var(--orange)}
+.kpi-card.warning .kpi-icon{background:rgba(244,162,97,.1);color:var(--orange)}
+.kpi-card.info{border-right-color:var(--light-blue)}
+.kpi-card.info .kpi-icon{background:rgba(0,180,216,.1);color:var(--light-blue)}
+.kpi-card.clickable{cursor:pointer}
+.kpi-card.clickable .view-hint{
+  position:absolute;top:10px;left:10px;background:var(--red);color:#fff;
+  font-size:9px;padding:2px 7px;border-radius:10px;font-weight:600
+}
+.kpi-card.clickable .view-hint.blue{background:var(--navy-800)}
+.kpi-card.clickable .view-hint.cyan{background:var(--light-blue)}
+
+.charts-section{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:20px}
+.chart-card{
+  background:var(--card);padding:18px;border-radius:12px;
+  box-shadow:0 2px 12px rgba(10,25,47,.06);border:1px solid var(--border)
+}
+.chart-card h3{
+  color:var(--navy-800);font-size:14px;font-weight:600;margin-bottom:5px;
+  display:flex;align-items:center;gap:8px
+}
+.chart-card h3::before{content:"";width:4px;height:14px;background:var(--navy-800);border-radius:2px}
+.chart-card .chart-desc{font-size:11px;color:var(--muted);margin-bottom:12px}
+.chart-card .chart-wrap{position:relative;height:300px}
+.chart-card.full-width{grid-column:1/-1}
+
+.donut-center{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);
+  text-align:center;pointer-events:none
+}
+.donut-center .dc-num{font-size:24px;font-weight:700;color:var(--navy-800)}
+.donut-center .dc-lbl{font-size:10px;color:var(--muted)}
+
+.login-modal{
+  display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(10,25,47,.75);z-index:1500;
+  justify-content:center;align-items:center;padding:15px;backdrop-filter:blur(6px)
+}
+.login-modal.active{display:flex}
+.login-box{
+  background:#fff;border-radius:16px;max-width:420px;width:100%;
+  box-shadow:0 20px 60px rgba(10,25,47,.4);overflow:hidden;animation:slideIn .3s ease
+}
+@keyframes slideIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+.login-header{
+  background:linear-gradient(135deg,var(--navy-900) 0%,var(--navy-700) 100%);
+  color:#fff;padding:20px 24px;text-align:center
+}
+.login-header .lock-icon{
+  width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 10px
+}
+.login-header h3{font-size:16px;font-weight:700;margin-bottom:4px}
+.login-header p{font-size:11px;opacity:.85}
+.login-body{padding:24px}
+.login-body .form-group{margin-bottom:14px}
+.login-body label{display:block;font-size:12px;color:var(--navy-800);margin-bottom:6px;font-weight:600}
+.login-body input{
+  width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;
+  font-family:inherit;font-size:13px;transition:all .2s;direction:ltr;text-align:left
+}
+.login-body input:focus{outline:none;border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(69,123,157,.15)}
+.login-error{
+  background:#f8d7da;color:#721c24;padding:10px 12px;border-radius:8px;
+  font-size:12px;margin-bottom:14px;display:none;border:1px solid #f5c2c7
+}
+.login-error.show{display:block}
+.login-actions{display:flex;gap:10px;margin-top:18px}
+.login-actions .btn{flex:1;padding:10px;font-size:13px}
+.btn-login{background:var(--green);color:#fff}
+.btn-login:hover{background:#238578}
+.btn-cancel{background:#fff;color:var(--navy-800);border:1px solid var(--border)}
+.btn-cancel:hover{background:var(--bg)}
+.login-footer{background:var(--bg);padding:12px 24px;text-align:center;font-size:10.5px;color:var(--muted);border-top:1px solid var(--border)}
+
+.modal-overlay{
+  display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(10,25,47,.6);z-index:1000;
+  justify-content:center;align-items:center;padding:15px;backdrop-filter:blur(4px)
+}
+.modal-overlay.active{display:flex}
+.modal{
+  background:#fff;border-radius:14px;max-width:960px;width:100%;
+  max-height:85vh;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 20px 60px rgba(10,25,47,.3)
+}
+.modal-header{
+  background:var(--navy-800);color:#fff;padding:16px 20px;
+  display:flex;justify-content:space-between;align-items:center
+}
+.modal-header h3{font-size:15px;font-weight:600}
+.modal-close{
+  background:transparent;border:none;color:#fff;font-size:22px;
+  cursor:pointer;width:30px;height:30px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center
+}
+.modal-close:hover{background:rgba(255,255,255,.15)}
+.modal-body{padding:18px 20px;overflow-y:auto;flex:1}
+
+.issue-item{
+  border:1px solid var(--border);border-radius:10px;padding:12px 14px;
+  margin-bottom:10px;background:#fff;transition:all .2s;border-right:4px solid var(--red)
+}
+.issue-item:hover{box-shadow:0 4px 12px rgba(10,25,47,.08);transform:translateX(-2px)}
+.issue-item .issue-date{
+  display:inline-block;background:var(--navy-800);color:#fff;
+  padding:2px 9px;border-radius:12px;font-size:10px;font-weight:500;margin-bottom:6px
+}
+.issue-item .issue-title{font-size:13px;font-weight:600;color:var(--navy-800);margin-bottom:5px;line-height:1.7}
+.issue-item .issue-meta{font-size:11px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.issue-item .issue-meta span{display:flex;align-items:center;gap:3px}
+
+.table-section{
+  background:var(--card);padding:18px;border-radius:12px;
+  box-shadow:0 2px 12px rgba(10,25,47,.06);border:1px solid var(--border);margin-bottom:20px
+}
+.table-section h3{
+  color:var(--navy-800);font-size:14px;font-weight:600;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px
+}
+.table-section h3::before{content:"";width:4px;height:14px;background:var(--navy-800);border-radius:2px}
+.table-wrap{overflow-x:auto;max-height:600px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.data-table{width:100%;border-collapse:collapse;font-size:11.5px;min-width:1000px}
+.data-table thead{position:sticky;top:0;z-index:2}
+.data-table th{
+  background:var(--navy-800);color:#fff;padding:9px 7px;text-align:right;
+  font-weight:600;white-space:nowrap;border:1px solid #000;font-size:11.5px
+}
+.data-table td{padding:7px;border:1px solid #000;vertical-align:top;line-height:1.5}
+.data-table tbody tr:nth-child(even){background:#f0f4f8}
+.data-table tbody tr:hover{opacity:0.85}
+
+.data-table tbody tr.status-green{background:#d4edda !important}
+.data-table tbody tr.status-yellow{background:#fff3cd !important}
+.data-table tbody tr.status-red{background:#f8d7da !important}
+.data-table tbody tr.status-blue{background:#d1ecf1 !important}
+
+footer{background:var(--navy-900);color:#fff;padding:18px 24px;text-align:center;font-size:12px;margin-top:24px}
+footer .copyright{opacity:.9}
+footer .copyright strong{color:var(--blue-300)}
+
+.toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  background:var(--green);color:#fff;padding:10px 20px;border-radius:8px;
+  box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:2000;font-size:12px;
+  opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center
+}
+.toast.show{opacity:1}
+.toast.error{background:var(--red)}
+
+/* حالت‌های نمایش */
+body.view-pc .filters-grid{grid-template-columns:repeat(7,1fr)}
+body.view-pc .charts-section{grid-template-columns:repeat(2,1fr)}
+body.view-pc .kpi-section{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+
+body.view-mobile{font-size:13px}
+body.view-mobile header{padding:12px;flex-direction:column;align-items:stretch}
+body.view-mobile header .title-block{text-align:center}
+body.view-mobile header .title-block h1{font-size:16px}
+body.view-mobile header .title-block h2{font-size:10px}
+body.view-mobile header .meta{justify-content:center}
+body.view-mobile main{padding:10px}
+body.view-mobile .filters-section{padding:12px}
+body.view-mobile .filters-section h3{font-size:12px}
+body.view-mobile .filters-grid{grid-template-columns:1fr !important;gap:8px}
+body.view-mobile .filter-item label{font-size:10px}
+body.view-mobile .filter-item select{padding:7px 8px;font-size:11px}
+body.view-mobile .filter-actions{justify-content:stretch}
+body.view-mobile .filter-actions .btn{flex:1}
+body.view-mobile .kpi-section{grid-template-columns:1fr !important;gap:10px}
+body.view-mobile .kpi-card{padding:12px}
+body.view-mobile .kpi-card .kpi-label{font-size:11px}
+body.view-mobile .kpi-card .kpi-value{font-size:22px}
+body.view-mobile .kpi-card .kpi-desc{font-size:10px}
+body.view-mobile .kpi-card .kpi-icon{width:28px;height:28px;font-size:14px}
+body.view-mobile .charts-section{grid-template-columns:1fr !important;gap:12px}
+body.view-mobile .chart-card{padding:12px}
+body.view-mobile .chart-card h3{font-size:12px}
+body.view-mobile .chart-card .chart-desc{font-size:10px}
+body.view-mobile .chart-card .chart-wrap{height:240px}
+body.view-mobile .table-section{padding:10px}
+body.view-mobile .table-section h3{font-size:12px}
+body.view-mobile .data-table{font-size:10px;min-width:800px}
+body.view-mobile .data-table th,body.view-mobile .data-table td{padding:5px 4px}
+body.view-mobile .datetime-panel{padding:6px 10px}
+body.view-mobile .datetime-value.date{font-size:12px}
+body.view-mobile .datetime-value.time{font-size:18px}
+body.view-mobile .datetime-row.time-row{font-size:16px}
+body.view-mobile .upload-btn{font-size:11px;padding:7px 12px;width:100%;justify-content:center}
+body.view-mobile .user-badge{font-size:10px}
+body.view-mobile footer{padding:12px;font-size:10px}
+
+@media(max-width:1200px){
+  body.view-pc .filters-grid{grid-template-columns:repeat(4,1fr)}
+  body.view-pc .charts-section{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  body.view-pc{font-size:13px}
+  body.view-pc header{padding:14px;flex-direction:column;align-items:flex-start}
+  body.view-pc header .title-block h1{font-size:17px}
+  body.view-pc header .title-block h2{font-size:11px}
+  body.view-pc header .meta{width:100%;justify-content:space-between}
+  body.view-pc .filters-grid{grid-template-columns:repeat(2,1fr)}
+  body.view-pc .kpi-section{grid-template-columns:repeat(2,1fr)}
+  body.view-pc .chart-card .chart-wrap{height:260px}
+}
+@media(max-width:480px){
+  body.view-pc .filters-grid{grid-template-columns:1fr}
+  body.view-pc .kpi-section{grid-template-columns:1fr}
+  body.view-pc header .meta{flex-direction:column;align-items:stretch}
+  body.view-pc header .meta .update,body.view-pc .upload-btn{width:100%;justify-content:center}
+}
+</style>
+</head>
+<body class="view-pc">
+
+<header>
+  <div class="title-block">
+    <h1>📊 داشبورد جلسات پاسخ سریع</h1>
+    <h2>شرکت پویانوین قطعه جی | مانیتورینگ وضعیت مشکلات و اقدامات اصلاحی</h2>
+  </div>
+  <div class="meta">
+    <div class="datetime-panel">
+      <div class="datetime-row date-row">
+        <span class="datetime-label">DATE</span>
+        <span class="datetime-value date" id="currentDate">----/--/--</span>
+      </div>
+      <div class="datetime-row time-row">
+        <span class="datetime-label">TIME</span>
+        <span class="datetime-value time" id="currentTime">--<span class="datetime-separator">:</span>--<span class="datetime-separator">:</span>--</span>
+      </div>
+    </div>
+    
+    <div class="view-toggle">
+      <button class="view-toggle-btn active" id="viewPC" data-tooltip="حالت دسکتاپ" onclick="setViewMode('pc')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+      </button>
+      <button class="view-toggle-btn" id="viewMobile" data-tooltip="حالت موبایل" onclick="setViewMode('mobile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+          <line x1="12" y1="18" x2="12.01" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="user-badge" id="userBadge" style="display:none">
+      <span>👤</span><span id="currentUser">-</span>
+      <button class="logout-btn" onclick="logout()">خروج</button>
+    </div>
+    <button class="upload-btn" id="uploadBtn" onclick="handleUploadClick()">📥 بارگذاری فایل اکسل</button>
+    <input type="file" id="excelFile" accept=".xlsx,.xls" style="display:none">
+  </div>
+</header>
+
+<main>
+  <section class="filters-section">
+    <h3>🔍 فیلترهای داشبورد</h3>
+    <div class="filters-grid" id="filtersGrid">
+      <div class="filter-item"><label>سال شمسی</label><select id="filterYear" onchange="applyFilters()"><option value="">همه سال‌ها</option></select></div>
+      <div class="filter-item"><label>ماه شمسی</label><select id="filterMonth" onchange="applyFilters()"><option value="">همه ماه‌ها</option></select></div>
+      <div class="filter-item"><label>نام قطعه</label><select id="filterPart" onchange="applyFilters()"><option value="">همه قطعات</option></select></div>
+      <div class="filter-item"><label>شاخص (حوزه/دستگاه)</label><select id="filterIndicator" onchange="applyFilters()"><option value="">همه شاخص‌ها</option></select></div>
+      <div class="filter-item"><label>اطلاع‌دهنده</label><select id="filterReporter" onchange="applyFilters()"><option value="">همه اطلاع‌دهندگان</option></select></div>
+      <div class="filter-item"><label>مسئول رسیدگی</label><select id="filterResponsible" onchange="applyFilters()"><option value="">همه مسئول‌ها</option></select></div>
+      <div class="filter-item"><label>وضعیت</label><select id="filterStatus" onchange="applyFilters()"><option value="">همه وضعیت‌ها</option></select></div>
+    </div>
+    <div class="filter-actions">
+      <button class="btn btn-secondary" onclick="resetFilters()">🔄 پاک‌سازی فیلترها</button>
+    </div>
+  </section>
+
+  <section class="kpi-section">
+    <div class="kpi-card success">
+      <div class="kpi-header"><div class="kpi-label">شاخص رفع عیب</div><div class="kpi-icon">✓</div></div>
+      <div class="kpi-value" id="kpiResolution">-</div>
+      <div class="kpi-desc">درصد مشکلاتی که به وضعیت سبز یا آبی رسیده‌اند. نشان‌دهنده کارآمدی سیستم در حل مسائل است.</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-header"><div class="kpi-label">کل مشکلات ثبت‌شده</div><div class="kpi-icon">📋</div></div>
+      <div class="kpi-value" id="kpiTotal">-</div>
+      <div class="kpi-desc">مجموع تعداد درخواست‌ها و عیوب مطرح‌شده در بازه زمانی انتخاب‌شده.</div>
+    </div>
+    <div class="kpi-card danger clickable" onclick="openUnresolvedModal()">
+      <span class="view-hint">👁 مشاهده</span>
+      <div class="kpi-header"><div class="kpi-label">مشکلات رفع نشده</div><div class="kpi-icon">⚠</div></div>
+      <div class="kpi-value" id="kpiOpen">-</div>
+      <div class="kpi-desc">تعداد مواردی که هنوز حل نشده‌اند (زرد یا قرمز). با کلیک، لیست از جدیدترین به قدیمی‌ترین نمایش داده می‌شود.</div>
+    </div>
+    <div class="kpi-card warning">
+      <div class="kpi-header"><div class="kpi-label">میانگین زمان حل مشکل</div><div class="kpi-icon">⏱</div></div>
+      <div class="kpi-value" id="kpiMTTR">-</div>
+      <div class="kpi-desc">میانگین روزهای سپری‌شده از زمان ثبت تا امروز برای مشکلات حل‌شده.</div>
+    </div>
+    <div class="kpi-card clickable" onclick="openCriticalModal()">
+      <span class="view-hint blue">👁 مشاهده</span>
+      <div class="kpi-header"><div class="kpi-label">حوزه‌های بحرانی</div><div class="kpi-icon">🏭</div></div>
+      <div class="kpi-value" id="kpiCriticalMachines">-</div>
+      <div class="kpi-desc">تعداد حوزه‌هایی که بیش از ۳ بار دچار مشکل شده‌اند. با کلیک، لیست از بیشترین به کمترین نمایش داده می‌شود.</div>
+    </div>
+    <div class="kpi-card warning">
+      <div class="kpi-header"><div class="kpi-label">نرخ تکرار خرابی</div><div class="kpi-icon">🔁</div></div>
+      <div class="kpi-value" id="kpiRecurring">-</div>
+      <div class="kpi-desc">درصد مشکلاتی که مربوط به دستگاه‌ها یا قطعات تکرارشونده هستند.</div>
+    </div>
+  </section>
+
+  <section class="charts-section">
+    <div class="chart-card">
+      <h3>وضعیت کلی مشکلات</h3>
+      <div class="chart-desc">توزیع درصدی و عددی مشکلات بر اساس وضعیت (سبز/زرد/قرمز/آبی)</div>
+      <div class="chart-wrap">
+        <canvas id="chartStatus"></canvas>
+        <div class="donut-center"><div class="dc-num" id="donutTotal">0</div><div class="dc-lbl">کل موارد</div></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>ماتریس گلوگاه‌ها (توزیع بر اساس مسئول)</h3>
+      <div class="chart-desc">شناسایی واحدهایی که بیشترین حجم مشکلات به آن‌ها ارجاع شده است</div>
+      <div class="chart-wrap"><canvas id="chartResponsible"></canvas></div>
+    </div>
+    <div class="chart-card full-width">
+      <h3>وضعیت حوزه‌های بحرانی</h3>
+      <div class="chart-desc">قانون ۲۰/۸۰ - شناسایی ۲۰٪ حوزه‌هایی که عامل ۸۰٪ توقفات هستند</div>
+      <div class="chart-wrap"><canvas id="chartIndicator"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>بیشترین قطعات مورد بحث</h3>
+      <div class="chart-desc">۱۰ قطعه‌ای که بیشترین تعداد مشکل را به خود اختصاص داده‌اند</div>
+      <div class="chart-wrap"><canvas id="chartPart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>بیشترین مشکل بر اساس اطلاع‌دهنده</h3>
+      <div class="chart-desc">توزیع مشکلات بر اساس واحد گزارش‌دهنده</div>
+      <div class="chart-wrap"><canvas id="chartReporter"></canvas></div>
+    </div>
+  </section>
+
+  <section class="table-section">
+    <h3>📋 جدول کامل داده‌ها (مرتب‌شده از جدیدترین به قدیمی‌ترین)</h3>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ردیف</th>
+            <th>تاریخ</th>
+            <th>اطلاع‌دهنده</th>
+            <th>مسئول</th>
+            <th>شرح موضوع</th>
+            <th>شاخص</th>
+            <th>نام قطعه</th>
+            <th>اقدام اصلاحی</th>
+            <th>تاریخ پیش‌بینی پایان</th>
+            <th>تاریخ انجام</th>
+          </tr>
+        </thead>
+        <tbody id="dataTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- Login Modal -->
+<div class="login-modal" id="loginModal">
+  <div class="login-box">
+    <div class="login-header">
+      <div class="lock-icon">🔒</div>
+      <h3>ورود مدیر سیستم</h3>
+      <p>برای بارگذاری فایل اکسل، احراز هویت لازم است</p>
+    </div>
+    <div class="login-body">
+      <div class="login-error" id="loginError">❌ نام کاربری یا رمز عبور اشتباه است</div>
+      <div class="form-group">
+        <label>نام کاربری</label>
+        <input type="text" id="loginUsername" placeholder="Username" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>رمز عبور</label>
+        <input type="password" id="loginPassword" placeholder="Password" autocomplete="off">
+      </div>
+      <div class="login-actions">
+        <button class="btn btn-login" onclick="doLogin()">🔓 ورود</button>
+        <button class="btn btn-cancel" onclick="closeLogin()">انصراف</button>
+      </div>
+    </div>
+    <div class="login-footer">⚠ این بخش فقط برای مدیر سیستم در دسترس است</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="unresolvedModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>⚠ لیست مشکلات رفع نشده (جدیدترین → قدیمی‌ترین)</h3>
+      <button class="modal-close" onclick="closeModal('unresolvedModal')">×</button>
+    </div>
+    <div class="modal-body" id="unresolvedList"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="criticalModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>🏭 لیست حوزه‌های بحرانی (بیش از ۳ مشکل - نزولی)</h3>
+      <button class="modal-close" onclick="closeModal('criticalModal')">×</button>
+    </div>
+    <div class="modal-body" id="criticalList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  <div class="copyright">
+    © طراحی و توسعه توسط <strong>Abbas Sadeghi</strong> | تمامی حقوق برای شرکت پویانوین قطعه جی محفوظ است | ۱۴۰۵
+  </div>
+</footer>
+
+<script>
+// ============ اعتبارسنجی مدیر ============
+const ADMIN_CREDENTIALS = {username:'abbassdgh',password:'as1414/*-'};
+let isLoggedIn=false;
+let currentUser=null;
+
+function handleUploadClick(){
+  if(isLoggedIn) document.getElementById('excelFile').click();
+  else openLogin();
+}
+function openLogin(){
+  document.getElementById('loginUsername').value='';
+  document.getElementById('loginPassword').value='';
+  document.getElementById('loginError').classList.remove('show');
+  document.getElementById('loginModal').classList.add('active');
+  setTimeout(()=>document.getElementById('loginUsername').focus(),100);
+}
+function closeLogin(){document.getElementById('loginModal').classList.remove('active')}
+function doLogin(){
+  const u=document.getElementById('loginUsername').value.trim();
+  const p=document.getElementById('loginPassword').value;
+  if(u===ADMIN_CREDENTIALS.username && p===ADMIN_CREDENTIALS.password){
+    isLoggedIn=true;currentUser=u;
+    closeLogin();updateAuthUI();
+    showToast('✅ خوش آمدید '+u);
+    setTimeout(()=>document.getElementById('excelFile').click(),400);
+  } else {
+    document.getElementById('loginError').classList.add('show');
+    document.getElementById('loginPassword').value='';
+    document.getElementById('loginPassword').focus();
+  }
+}
+function logout(){isLoggedIn=false;currentUser=null;updateAuthUI();showToast('🔒 از حساب مدیر خارج شدید')}
+function updateAuthUI(){
+  const badge=document.getElementById('userBadge');
+  const btn=document.getElementById('uploadBtn');
+  if(isLoggedIn){
+    badge.style.display='flex';
+    document.getElementById('currentUser').textContent=currentUser;
+    btn.innerHTML='📥 بارگذاری فایل اکسل';
+  } else {
+    badge.style.display='none';
+    btn.innerHTML='🔒 بارگذاری فایل اکسل (نیاز به ورود)';
+  }
+}
+document.addEventListener('keydown',function(e){
+  if(document.getElementById('loginModal').classList.contains('active')){
+    if(e.key==='Enter'){e.preventDefault();doLogin()}
+    else if(e.key==='Escape') closeLogin();
+  }
+});
+
+// ============ مدیریت حالت نمایش ============
+function setViewMode(mode){
+  const body=document.body;
+  body.classList.remove('view-pc','view-mobile');
+  body.classList.add('view-'+mode);
+  document.getElementById('viewPC').classList.toggle('active',mode==='pc');
+  document.getElementById('viewMobile').classList.toggle('active',mode==='mobile');
+  try{localStorage.setItem('dashboard_view_mode',mode)}catch(e){}
+  setTimeout(()=>{Object.values(charts).forEach(c=>{if(c && c.resize) c.resize()})},100);
+  showToast(mode==='pc'?'🖥️ حالت دسکتاپ فعال شد':'📱 حالت موبایل فعال شد');
+}
+function loadViewMode(){
+  try{
+    const saved=localStorage.getItem('dashboard_view_mode');
+    if(saved==='mobile'||saved==='pc') setViewMode(saved);
+  }catch(e){}
+}
+
+// ============ تبدیل تاریخ میلادی به شمسی ============
+function gregorianToJalali(gy,gm,gd){
+  var g_d_m=[0,31,59,90,120,151,181,212,243,273,304,334];
+  var jy=(gy<=1600)?0:979;
+  gy-=(gy<=1600)?621:1600;
+  var gy2=(gm>2)?(gy+1):gy;
+  var days=(365*gy)+(parseInt((gy2+3)/4))-(parseInt((gy2+99)/100))+(parseInt((gy2+399)/400))-80+gd+g_d_m[gm-1];
+  jy+=33*parseInt(days/12053);
+  days%=12053;
+  jy+=4*parseInt(days/1461);
+  days%=1461;
+  if(days>365){
+    jy+=parseInt((days-1)/365);
+    days=(days-1)%365;
+  }
+  var jm=(days<186)?1+parseInt(days/31):7+parseInt((days-186)/30);
+  var jd=1+((days<186)?(days%31):((days-186)%30));
+  return [jy,jm,jd];
+}
+
+// ============ ساعت و تاریخ داینامیک ============
+function updateDateTime(){
+  const now=new Date();
+  const j=gregorianToJalali(now.getFullYear(),now.getMonth()+1,now.getDate());
+  const dateStr=j[0]+'/'+String(j[1]).padStart(2,'0')+'/'+String(j[2]).padStart(2,'0');
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const s=String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('currentDate').textContent=dateStr;
+  document.getElementById('currentTime').innerHTML=h+'<span class="datetime-separator">:</span>'+m+'<span class="datetime-separator">:</span>'+s;
+}
+setInterval(updateDateTime,1000);
+updateDateTime();
+
+// ============ متغیرهای سراسری ============
+let data=[];
+let charts={};
+let currentFiltered=[];
+
+const uniqueDonutPalette=[
+  '#0A192F','#1B263B','#233554','#457B9D','#A8DADC',
+  '#2A9D8F','#E9C46A','#F4A261','#E76F51','#264653',
+  '#6D597A','#B56576','#E56B6F','#EAAC8B','#31B0D2',
+  '#6096B4','#939185','#4A4E69','#C9ADA7','#F2E9E4',
+  '#8ECAE6','#219EBC','#023047','#FFB703','#FB8500'
+];
+
+function cleanStr(s){
+  if(s===undefined||s===null) return "";
+  return String(s).trim().replace(/[\u200c\u200f\u200e]+/g,'').replace(/^\s+|\s+$/g,'');
+}
+function parseJalali(dateStr){
+  if(!dateStr) return null;
+  const s=cleanStr(dateStr);const p=s.split('/').map(x=>parseInt(x));
+  if(p.length<3||isNaN(p[0])) return null;
+  return {year:p[0],month:p[1],day:p[2]};
+}
+function jalaliToDayNum(y,m,d){
+  return (365*y)+(Math.floor(y/4)-Math.floor((y+99)/100)+Math.floor((y+399)/400)-81)+d+(m<=7?(m-1)*31:((m-1)*30)+6);
+}
+function daysBetween(d1,d2){
+  const a=parseJalali(d1),b=parseJalali(d2);
+  if(!a||!b) return 0;
+  return Math.abs(jalaliToDayNum(b.year,b.month,b.day)-jalaliToDayNum(a.year,a.month,a.day));
+}
+function compareJalali(date1,date2){
+  const d1=parseJalali(date1),d2=parseJalali(date2);
+  if(!d1||!d2) return 0;
+  return jalaliToDayNum(d1.year,d1.month,d1.day)-jalaliToDayNum(d2.year,d2.month,d2.day);
+}
+function getTodayJalali(){
+  const now=new Date();
+  const j=gregorianToJalali(now.getFullYear(),now.getMonth()+1,now.getDate());
+  return j[0]+'/'+String(j[1]).padStart(2,'0')+'/'+String(j[2]).padStart(2,'0');
+}
+function showToast(msg,err=false){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.className='toast show'+(err?' error':'');setTimeout(()=>t.className='toast',3000);
+}
+
+function calculateStatus(deadline,doneDate){
+  const today=getTodayJalali();
+  if(doneDate && parseJalali(doneDate)){
+    const diff=compareJalali(doneDate,deadline);
+    if(diff<=0) return 'سبز';
+    else return 'آبی';
+  } else {
+    if(compareJalali(today,deadline)>0) return 'قرمز';
+    else return 'زرد';
+  }
+}
+
+// ============ پردازش داده‌ها - ساختار دقیق فایل اکسل ============
+// ستون‌های فایل اکسل (بدون حوزه تاثیرگذاری):
+// 0=ردیف, 1=تاریخ, 2=اطلاع دهنده, 3=مسئول, 4=شرح موضوع,
+// 5=شاخص, 6=نام قطعه, 7=اقدام اصلاحی, 8=تاریخ پیش بینی پایان, 9=تاریخ انجام
+function processData(raw){
+  return raw.map(r=>{
+    const deadline=cleanStr(r[8]);
+    const doneDate=cleanStr(r[9]);
+    const status=calculateStatus(deadline,doneDate);
+    return {
+      id:r[0],
+      date:cleanStr(r[1]),
+      reporter:cleanStr(r[2]),
+      responsible:cleanStr(r[3]),
+      description:cleanStr(r[4]),
+      indicator:cleanStr(r[5]),
+      partName:cleanStr(r[6]),
+      correctiveAction:cleanStr(r[7]),
+      deadline:deadline,
+      doneDate:doneDate,
+      status:status
+    };
+  }).filter(d=>d.date&&parseJalali(d.date));
+}
+
+function sortDateDesc(arr){
+  return arr.slice().sort((a,b)=>{
+    const pa=parseJalali(a.date),pb=parseJalali(b.date);
+    return jalaliToDayNum(pb.year,pb.month,pb.day)-jalaliToDayNum(pa.year,pa.month,pa.day);
+  });
+}
+
+function initCharts(){
+  Chart.defaults.font.family='Vazirmatn';
+  Chart.defaults.color='#1B263B';
+
+  charts.status=new Chart(document.getElementById('chartStatus'),{
+    type:'doughnut',
+    data:{
+      labels:['سبز (به‌موقع)','زرد (در انتظار)','قرمز (عقب‌افتاده)','آبی (با تأخیر)'],
+      datasets:[{data:[0,0,0,0],backgroundColor:['#2A9D8F','#FFD60A','#D90429','#00B4D8'],borderWidth:3,borderColor:'#fff'}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{
+        legend:{position:'bottom',labels:{padding:12,font:{size:12},
+          generateLabels:function(chart){
+            const ds=chart.data.datasets[0];const total=ds.data.reduce((a,b)=>a+b,0);
+            return chart.data.labels.map((lbl,i)=>{
+              const val=ds.data[i];const pct=total>0?((val/total)*100).toFixed(1):0;
+              return {text:lbl+': '+val+' مورد ('+pct+'%)',fillStyle:ds.backgroundColor[i],
+                strokeStyle:ds.borderColor,lineWidth:ds.borderWidth,index:i};
+            });
+          }
+        }},
+        tooltip:{callbacks:{label:function(ctx){
+          const total=ctx.dataset.data.reduce((a,b)=>a+b,0);
+          const pct=total>0?((ctx.raw/total)*100).toFixed(1):0;
+          return ctx.label+': '+ctx.raw+' مورد ('+pct+'%)';
+        }}}
+      }
+    }
+  });
+
+  charts.responsible=new Chart(document.getElementById('chartResponsible'),{
+    type:'bar',
+    data:{labels:[],datasets:[{label:'تعداد مشکلات',data:[],backgroundColor:'#1B263B',borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#E1E8ED'}},y:{grid:{display:false}}}}
+  });
+
+  charts.indicator=new Chart(document.getElementById('chartIndicator'),{
+    type:'bar',
+    data:{labels:[],datasets:[{label:'تعداد مشکلات',data:[],backgroundColor:'#457B9D',borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'#E1E8ED'}}}}
+  });
+
+  charts.part=new Chart(document.getElementById('chartPart'),{
+    type:'bar',
+    data:{labels:[],datasets:[{label:'تعداد مشکلات',data:[],backgroundColor:'#0A192F',borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#E1E8ED'}},y:{grid:{display:false}}}}
+  });
+
+  charts.reporter=new Chart(document.getElementById('chartReporter'),{
+    type:'doughnut',
+    data:{labels:[],datasets:[{data:[],backgroundColor:uniqueDonutPalette,borderWidth:2,borderColor:'#fff'}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'45%',
+      plugins:{
+        legend:{position:'bottom',labels:{padding:8,font:{size:10},boxWidth:10}},
+        tooltip:{callbacks:{label:function(ctx){
+          const total=ctx.dataset.data.reduce((a,b)=>a+b,0);
+          const pct=total>0?((ctx.raw/total)*100).toFixed(1):0;
+          return ctx.label+': '+ctx.raw+' ('+pct+'%)';
+        }}}
+      }
+    }
+  });
+}
+
+function populateFilters(){
+  const years=[...new Set(data.map(d=>parseJalali(d.date)?.year).filter(Boolean))].sort();
+  const months=[...new Set(data.map(d=>{const p=parseJalali(d.date);return p?p.year+'/'+String(p.month).padStart(2,'0'):null}).filter(Boolean))].sort();
+  const parts=[...new Set(data.map(d=>d.partName).filter(Boolean))].sort();
+  const indicators=[...new Set(data.map(d=>d.indicator).filter(Boolean))].sort();
+  const reporters=[...new Set(data.map(d=>d.reporter).filter(Boolean))].sort();
+  const responsibles=[...new Set(data.map(d=>d.responsible).filter(Boolean))].sort();
+  const statuses=[...new Set(data.map(d=>d.status).filter(Boolean))];
+  const statusOrder=['سبز','زرد','قرمز','آبی'];
+  statuses.sort((a,b)=>statusOrder.indexOf(a)-statusOrder.indexOf(b));
+  
+  fillSelect('filterYear',years);
+  fillSelect('filterMonth',months);
+  fillSelect('filterPart',parts);
+  fillSelect('filterIndicator',indicators);
+  fillSelect('filterReporter',reporters);
+  fillSelect('filterResponsible',responsibles);
+  fillSelect('filterStatus',statuses);
+}
+
+function fillSelect(id,items){
+  const sel=document.getElementById(id);
+  const currentVal=sel.value;
+  const firstOpt=sel.options[0].outerHTML;
+  sel.innerHTML=firstOpt+items.map(i=>'<option value="'+i+'">'+i+'</option>').join('');
+  if(items.includes(currentVal)) sel.value=currentVal;
+}
+
+function getFilteredData(){
+  const y=document.getElementById('filterYear').value;
+  const m=document.getElementById('filterMonth').value;
+  const p=document.getElementById('filterPart').value;
+  const i=document.getElementById('filterIndicator').value;
+  const r=document.getElementById('filterReporter').value;
+  const rs=document.getElementById('filterResponsible').value;
+  const st=document.getElementById('filterStatus').value;
+  
+  return data.filter(d=>{
+    const pd=parseJalali(d.date);
+    if(!pd) return false;
+    const ym=pd.year+'/'+String(pd.month).padStart(2,'0');
+    if(y&&pd.year!=y) return false;
+    if(m&&ym!==m) return false;
+    if(p&&d.partName!==p) return false;
+    if(i&&d.indicator!==i) return false;
+    if(r&&d.reporter!==r) return false;
+    if(rs&&d.responsible!==rs) return false;
+    if(st&&d.status!==st) return false;
+    return true;
+  });
+}
+
+function applyFilters(){updateDashboard(getFilteredData())}
+function resetFilters(){
+  ['filterYear','filterMonth','filterPart','filterIndicator','filterReporter','filterResponsible','filterStatus'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  updateDashboard(data);
+}
+
+function updateDashboard(filtered){
+  currentFiltered=filtered;
+  const total=filtered.length;
+  const green=filtered.filter(d=>d.status==='سبز').length;
+  const yellow=filtered.filter(d=>d.status==='زرد').length;
+  const red=filtered.filter(d=>d.status==='قرمز').length;
+  const blue=filtered.filter(d=>d.status==='آبی').length;
+  
+  const resolved=green+blue;
+  const resolutionRate=total>0?((resolved/total)*100).toFixed(1):0;
+  
+  const today=getTodayJalali();
+  const resolvedDays=filtered.filter(d=>d.status==='سبز'||d.status==='آبی').map(d=>daysBetween(d.date,today));
+  const mttr=resolvedDays.length>0?(resolvedDays.reduce((a,b)=>a+b,0)/resolvedDays.length).toFixed(1):'-';
+  
+  const indicatorCount={};
+  filtered.forEach(d=>{if(d.indicator)indicatorCount[d.indicator]=(indicatorCount[d.indicator]||0)+1});
+  const criticalMachines=Object.values(indicatorCount).filter(c=>c>3).length;
+  
+  const partCount={};
+  filtered.forEach(d=>{if(d.partName)partCount[d.partName]=(partCount[d.partName]||0)+1});
+  
+  const recurring=Object.values(indicatorCount).filter(c=>c>1).reduce((a,b)=>a+b,0);
+  const recurringRate=total>0?((recurring/total)*100).toFixed(1):0;
+
+  document.getElementById('kpiResolution').textContent=resolutionRate+'%';
+  document.getElementById('kpiTotal').textContent=total.toLocaleString('fa-IR');
+  document.getElementById('kpiOpen').textContent=(yellow+red).toLocaleString('fa-IR');
+  document.getElementById('kpiMTTR').textContent=mttr!=='-'?mttr+' روز':'-';
+  document.getElementById('kpiCriticalMachines').textContent=criticalMachines.toLocaleString('fa-IR');
+  document.getElementById('kpiRecurring').textContent=recurringRate+'%';
+  document.getElementById('donutTotal').textContent=total;
+
+  charts.status.data.datasets[0].data=[green,yellow,red,blue];
+  charts.status.update();
+
+  const resData={};
+  filtered.forEach(d=>{if(d.responsible)resData[d.responsible]=(resData[d.responsible]||0)+1});
+  const resSorted=Object.entries(resData).sort((a,b)=>b[1]-a[1]);
+  charts.responsible.data.labels=resSorted.map(x=>x[0]);
+  charts.responsible.data.datasets[0].data=resSorted.map(x=>x[1]);
+  charts.responsible.update();
+
+  let indicatorEntries=Object.entries(indicatorCount);
+  indicatorEntries=indicatorEntries.sort((a,b)=>b[1]-a[1]).slice(0,15);
+  charts.indicator.data.labels=indicatorEntries.map(x=>x[0]);
+  charts.indicator.data.datasets[0].data=indicatorEntries.map(x=>x[1]);
+  charts.indicator.update();
+
+  const partSorted=Object.entries(partCount).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  charts.part.data.labels=partSorted.map(x=>x[0]);
+  charts.part.data.datasets[0].data=partSorted.map(x=>x[1]);
+  charts.part.update();
+
+  const repData={};
+  filtered.forEach(d=>{if(d.reporter)repData[d.reporter]=(repData[d.reporter]||0)+1});
+  const repSorted=Object.entries(repData).sort((a,b)=>b[1]-a[1]);
+  charts.reporter.data.labels=repSorted.map(x=>x[0]);
+  charts.reporter.data.datasets[0].data=repSorted.map(x=>x[1]);
+  charts.reporter.update();
+
+  window._currentIndicatorCount=indicatorCount;
+  renderDataTable(filtered);
+}
+
+// ============ جدول داده‌ها - دقیقاً مطابق ساختار فایل اکسل ============
+function renderDataTable(filtered){
+  const sorted=sortDateDesc(filtered);
+  const tbody=document.getElementById('dataTableBody');
+  tbody.innerHTML=sorted.map(d=>{
+    let rowClass='';
+    if(d.status==='سبز') rowClass='status-green';
+    else if(d.status==='زرد') rowClass='status-yellow';
+    else if(d.status==='قرمز') rowClass='status-red';
+    else if(d.status==='آبی') rowClass='status-blue';
+    
+    // ۱۰ ستون دقیقاً مطابق فایل اکسل (بدون حوزه تاثیرگذاری)
+    return '<tr class="'+rowClass+'">'+
+      '<td>'+d.id+'</td>'+
+      '<td>'+d.date+'</td>'+
+      '<td>'+(d.reporter||'-')+'</td>'+
+      '<td>'+(d.responsible||'-')+'</td>'+
+      '<td>'+d.description+'</td>'+
+      '<td>'+(d.indicator||'-')+'</td>'+
+      '<td>'+(d.partName||'-')+'</td>'+
+      '<td>'+(d.correctiveAction||'-')+'</td>'+
+      '<td>'+(d.deadline||'-')+'</td>'+
+      '<td>'+(d.doneDate||'-')+'</td>'+
+      '</tr>';
+  }).join('');
+}
+
+function openUnresolvedModal(){
+  const unresolved=sortDateDesc(currentFiltered.filter(d=>d.status==='زرد'||d.status==='قرمز'));
+  const list=document.getElementById('unresolvedList');
+  if(!unresolved.length){
+    list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">✅ هیچ مشکل رفع‌نشده‌ای یافت نشد!</div>';
+  } else {
+    list.innerHTML=unresolved.map(d=>{
+      const borderColor=d.status==='قرمز'?'var(--red)':'var(--yellow)';
+      return '<div class="issue-item" style="border-right-color:'+borderColor+'"><span class="issue-date">📅 '+d.date+'</span>'+
+      '<div class="issue-title">'+d.description+'</div><div class="issue-meta">'+
+      '<span>👤 اطلاع‌دهنده: <b>'+(d.reporter||'-')+'</b></span>'+
+      '<span>🔧 مسئول: <b>'+(d.responsible||'-')+'</b></span>'+
+      '<span>🏭 شاخص: <b>'+(d.indicator||'-')+'</b></span>'+
+      '<span>📅 سررسید: <b>'+(d.deadline||'-')+'</b></span>'+
+      (d.partName?'<span>⚙ قطعه: <b>'+d.partName+'</b></span>':'')+
+      '</div></div>';
+    }).join('');
+  }
+  document.getElementById('unresolvedModal').classList.add('active');
+}
+
+function openCriticalModal(){
+  const ic=window._currentIndicatorCount||{};
+  let entries=Object.entries(ic).filter(x=>x[1]>3);
+  entries=entries.sort((a,b)=>b[1]-a[1]);
+  const list=document.getElementById('criticalList');
+  if(!entries.length){
+    list.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">✅ هیچ حوزه بحرانی یافت نشد!</div>';
+  } else {
+    list.innerHTML=entries.map(e=>'<div class="issue-item" style="border-right-color:var(--orange)"><span class="issue-date">🏭 '+e[0]+'</span>'+
+      '<div class="issue-title" style="font-size:12px;color:var(--muted);margin-top:4px">تعداد مشکلات ثبت‌شده: <b style="color:var(--red)">'+e[1]+' مورد</b></div></div>').join('');
+  }
+  document.getElementById('criticalModal').classList.add('active');
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('active')}
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m) m.classList.remove('active')});
+});
+
+// ============ بارگذاری فایل اکسل ============
+document.getElementById('excelFile').addEventListener('change',function(e){
+  if(!isLoggedIn){
+    showToast('❌ دسترسی غیرمجاز',true);
+    e.target.value='';
+    return;
+  }
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(evt){
+    try{
+      const wb=XLSX.read(evt.target.result,{type:'array',cellDates:false});
+      let sheetName=wb.SheetNames.find(s=>s.trim()==='FR')||
+                    wb.SheetNames.find(s=>s.includes('FR'))||
+                    wb.SheetNames[0];
+      const ws=wb.Sheets[sheetName];
+      const json=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      
+      // پیدا کردن ردیف هدر - باید شامل "تاریخ" و "شرح موضوع" باشد
+      let hIdx=-1;
+      for(let i=0;i<Math.min(20,json.length);i++){
+        const row=json[i].map(c=>cleanStr(c));
+        const rowStr=row.join('|');
+        if(rowStr.includes('تاریخ') && rowStr.includes('شرح موضوع')){
+          hIdx=i;
+          break;
+        }
+      }
+      
+      if(hIdx===-1){
+        showToast('❌ فرمت فایل شناسایی نشد',true);
+        return;
+      }
+      
+      const newData=[];
+      for(let i=hIdx+1;i<json.length;i++){
+        const row=json[i];
+        if(!row||row.length<9) continue;
+        const dateVal=cleanStr(row[1]);
+        if(!dateVal||!parseJalali(dateVal)) continue;
+        // خواندن دقیقاً ۱۰ ستون مطابق ساختار فایل اکسل
+        newData.push([
+          row[0],   // ردیف
+          row[1],   // تاریخ
+          row[2],   // اطلاع دهنده
+          row[3],   // مسئول
+          row[4],   // شرح موضوع
+          row[5],   // شاخص
+          row[6],   // نام قطعه
+          row[7],   // اقدام اصلاحی
+          row[8],   // تاریخ پیش بینی پایان
+          row[9]||''  // تاریخ انجام
+        ]);
+      }
+      
+      if(!newData.length){
+        showToast('❌ داده معتبری یافت نشد',true);
+        return;
+      }
+      
+      data=processData(newData);
+      populateFilters();
+      updateDashboard(data);
+      
+      const dates=data.map(d=>d.date).filter(Boolean).sort();
+      showToast('✅ فایل با موفقیت بارگذاری شد ('+data.length.toLocaleString('fa-IR')+' رکورد)');
+      e.target.value='';
+    }catch(err){
+      console.error(err);
+      showToast('❌ خطا: '+err.message,true);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+window.addEventListener('DOMContentLoaded',()=>{
+  initCharts();
+  updateAuthUI();
+  loadViewMode();
+  showToast('📥 برای بارگذاری فایل اکسل، روی دکمه کلیک کنید');
+});
+</script>
+</body>
+</html>
